@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>夢女與夢角 · 字卡傳訊</title>
+<style>
+:root{
+  --bg:#f7f5f0; --panel:#ffffff; --text:#2b2b2b; --text-sub:#8a8a8a;
+  --user-bubble:#95ec69; --user-text:#1a1a1a; --dream-bubble:#ffffff; --dream-text:#2b2b2b;
+  --btn:#95ec69; --btn-text:#1a1a1a; --input-bg:#f0eee9; --input-text:#2b2b2b;
+  --avatar-border:#e2ddd4; --typing-bg:#ffffff; --typing-text:#8a8a8a;
+  --call-mask:rgba(0,0,0,.55); --accent:#95ec69; --divider:#e8e4dc;
+  --shadow:0 8px 30px rgba(0,0,0,.08); --nav-bg:#ffffff;
+  --tarot-bg:linear-gradient(160deg,#fdf6ec,#efe4d2); --tarot-card:#fffdf8;
+  --tarot-accent:#b98b4e; --tarot-gold:#c9a25e; --tarot-text:#3a2f22;
+  --bubble-radius:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text)}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:inherit}
+.hidden{display:none !important}
+
+#loginPage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#fdf9f2,#f0e9dd);z-index:100}
+.login-card{width:340px;max-width:90vw;background:var(--panel);border-radius:20px;padding:32px 26px;box-shadow:var(--shadow);text-align:center}
+.login-icon{display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.login-icon svg{width:120px;height:52px}
+.login-title{font-size:22px;font-weight:700;letter-spacing:2px;margin:0 0 6px}
+.login-sub{font-size:12px;color:var(--text-sub);margin:0 0 22px;letter-spacing:1px}
+.login-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--divider);background:var(--input-bg);color:var(--input-text);font-size:14px;margin-bottom:12px;outline:none}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:12px;border-radius:12px;background:var(--accent);color:var(--btn-text);font-size:15px;font-weight:600;margin-top:6px;transition:.15s}
+.login-btn:hover{filter:brightness(.95)}
+.login-guest{width:100%;padding:11px;border-radius:12px;background:transparent;color:var(--text-sub);font-size:13px;margin-top:10px;border:1px solid var(--divider)}
+.login-tip{font-size:11px;color:var(--text-sub);margin-top:18px;line-height:1.6}
+.login-err{color:#e05a5a;font-size:12px;min-height:16px;margin-bottom:4px}
+
+#app{width:100%;max-width:900px;height:90vh;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+#nav{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--divider);background:var(--nav-bg)}
+#nav .brand{font-size:16px;font-weight:700;letter-spacing:1px}
+#nav .acct{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);cursor:default}
+#nav .dot{width:8px;height:8px;border-radius:50%;background:#37c26a}
+
+.page{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.page.hidden{display:none}
+
+#chatTop{flex-shrink:0;padding:14px 16px 8px;display:flex;align-items:flex-start;justify-content:center;gap:10px;background:var(--nav-bg);border-bottom:1px solid var(--divider)}
+.hero-avatar{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
+.hero-avatar .av{width:54px;height:54px;border-radius:50%;overflow:hidden;border:2px solid var(--avatar-border);background:#eee;display:flex;align-items:center;justify-content:center;position:relative}
+.hero-avatar .av img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-avatar .av .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.hero-avatar .nm{font-size:12px;color:var(--text);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ecg{width:70px;height:54px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.func-grid{display:grid;grid-template-columns:26px 26px;grid-template-rows:26px 26px;gap:5px;margin-left:4px;align-self:center}
+.func-btn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--btn);color:var(--btn-text);transition:.15s;padding:0}
+.func-btn:hover{filter:brightness(.92)}
+.func-btn svg{width:14px;height:14px;display:block}
+
+#msgList{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px;display:flex;flex-direction:column;gap:12px;background-color:var(--bg);background-size:contain;background-repeat:no-repeat;background-position:center}
+
+/* 消息行 */
+.msg-row{display:flex;gap:8px;align-items:flex-start;max-width:100%}
+.msg-row.user{flex-direction:row-reverse}
+.msg-row .mav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1px solid var(--avatar-border);background:#eee;display:flex;align-items:center;justify-content:center}
+.msg-row .mav img{width:100%;height:100%;object-fit:cover}
+.msg-body{display:flex;flex-direction:column;max-width:calc(100% - 90px);min-width:0}
+.msg-row.user .msg-body{align-items:flex-end}
+.msg-meta{display:flex;align-items:center;gap:6px;margin:0 4px 3px;font-size:11px;color:var(--text-sub)}
+.msg-row.user .msg-meta{flex-direction:row-reverse}
+.msg-name{font-size:11px;color:var(--text-sub)}
+.msg-time{font-size:10px;color:var(--text-sub);opacity:.8}
+
+/* 气泡 */
+.bubble{position:relative;padding:9px 13px;font-size:14.5px;line-height:1.5;word-break:break-word;max-width:100%;box-shadow:0 1px 2px rgba(0,0,0,.04);z-index:1}
+.msg-row.user .bubble{background:var(--user-bubble);color:var(--user-text);border-radius:var(--bubble-radius)}
+.msg-row.dream .bubble{background:var(--dream-bubble);color:var(--dream-text);border-radius:var(--bubble-radius)}
+/* 尖角 */
+.msg-row.user .bubble::after{content:"";position:absolute;right:-6px;top:12px;width:12px;height:12px;background:var(--user-bubble);transform:rotate(45deg);border-radius:2px;z-index:-1;display:var(--user-tail,block)}
+.msg-row.dream .bubble::after{content:"";position:absolute;left:-6px;top:12px;width:12px;height:12px;background:var(--dream-bubble);transform:rotate(45deg);border-radius:2px;z-index:-1;display:var(--dream-tail,block)}
+/* 星星装饰（跟随主题 accent） */
+.msg-row.dream .bubble.star-deco::before{content:"";position:absolute;top:-8px;right:-8px;width:18px;height:18px;background:var(--accent);-webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.5l7.1-.6z"/></svg>') center/contain no-repeat;mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.5l7.1-.6z"/></svg>') center/contain no-repeat;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));z-index:2;display:var(--star-deco,block)}
+.msg-row.user .bubble.star-deco::before{display:none}
+
+.bubble img.chat-img{max-width:200px;max-height:260px;border-radius:10px;display:block}
+.bubble .quote{font-size:12px;color:var(--text-sub);background:rgba(0,0,0,.05);border-left:3px solid var(--accent);padding:5px 8px;border-radius:6px;margin-bottom:6px;line-height:1.4}
+.msg-sticker{width:80px;height:80px;object-fit:contain;display:block}
+.read-mark{font-size:10px;color:var(--text-sub);margin:2px 6px 0}
+.sys-center{display:flex;justify-content:center;margin:2px 0}
+.sys-pill{font-size:11.5px;color:#fff;background:rgba(0,0,0,.28);padding:4px 12px;border-radius:12px}
+.date-divider{display:flex;justify-content:center;margin:4px 0}
+.date-divider span{font-size:11px;color:var(--text-sub);background:rgba(0,0,0,.05);padding:3px 10px;border-radius:10px}
+
+#typingTip{align-self:flex-start;display:flex;align-items:center;gap:7px;background:var(--typing-bg);border-radius:16px;padding:7px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;max-width:80%}
+#typingTip .tav{width:26px;height:26px;border-radius:50%;overflow:hidden;flex-shrink:0}
+#typingTip .tav img{width:100%;height:100%;object-fit:cover}
+#typingTip .ttxt{font-size:13px;color:var(--typing-text)}
+#typingTip .dots{display:flex;gap:3px;margin-left:2px}
+#typingTip .dots i{width:5px;height:5px;border-radius:50%;background:var(--typing-text);animation:blink 1.2s infinite}
+#typingTip .dots i:nth-child(2){animation-delay:.2s}
+#typingTip .dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+
+#quoteBar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--panel);border-top:1px solid var(--divider)}
+#quoteBar .qcontent{flex:1;font-size:12px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid var(--accent);padding-left:8px}
+#quoteBar .qclose{width:22px;height:22px;border-radius:50%;background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-sub)}
+
+#inputArea{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:10px 12px;background:var(--nav-bg);border-top:1px solid var(--divider)}
+.ibtn{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--input-bg);color:var(--text);transition:.15s}
+.ibtn:hover{filter:brightness(.94)}
+.ibtn svg{width:19px;height:19px}
+#msgInput{flex:1;min-width:0;height:38px;max-height:110px;border-radius:19px;border:1px solid var(--divider);background:var(--input-bg);color:var(--input-text);padding:0 14px;font-size:14px;outline:none;resize:none;line-height:38px;overflow:hidden}
+#sendBtn{flex-shrink:0;height:38px;padding:0 16px;border-radius:19px;background:var(--accent);color:var(--btn-text);font-size:14px;font-weight:600;transition:.15s}
+#sendBtn:hover{filter:brightness(.95)}
+
+#ctxMenu{position:fixed;z-index:200;background:var(--panel);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;min-width:120px}
+#ctxMenu button{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;font-size:13.5px;color:var(--text);text-align:left}
+#ctxMenu button:hover{background:var(--input-bg)}
+
+#libPage{padding:0}
+.lib-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--divider);background:var(--nav-bg)}
+.lib-back{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--input-bg)}
+.lib-back svg{width:18px;height:18px}
+.lib-title{font-size:16px;font-weight:700}
+.lib-tabs{flex-shrink:0;display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--divider);background:var(--nav-bg);overflow-x:auto}
+.lib-tab{padding:7px 14px;border-radius:16px;font-size:13px;color:var(--text-sub);white-space:nowrap;transition:.15s}
+.lib-tab.active{background:var(--accent);color:var(--btn-text);font-weight:600}
+.lib-panel{flex:1;overflow-y:auto;padding:12px 16px 24px}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar .spacer{flex:1}
+.tbtn{display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:10px;background:var(--input-bg);font-size:12.5px;color:var(--text);transition:.15s}
+.tbtn:hover{filter:brightness(.94)}
+.tbtn svg{width:14px;height:14px}
+.tbtn.danger{color:#e05a5a}
+.badge{background:var(--accent);color:var(--btn-text);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.sel-all{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-sub)}
+.list-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--divider);margin-bottom:6px}
+.list-item:hover{background:var(--input-bg)}
+.list-item .txt{flex:1;font-size:13.5px;line-height:1.4;word-break:break-word}
+.list-item .thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#eee}
+.list-item .del{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-sub);font-size:13px;flex-shrink:0}
+.list-item .del:hover{background:rgba(224,90,90,.12);color:#e05a5a}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.empty-hint{text-align:center;color:var(--text-sub);font-size:13px;padding:30px 0}
+
+.set-block{background:var(--panel);border:1px solid var(--divider);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.set-block h4{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:6px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:13.5px}
+.set-row+.set-row{border-top:1px dashed var(--divider)}
+.set-row .sub{font-size:11.5px;color:var(--text-sub);margin-top:2px;line-height:1.4}
+.switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .sl{position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s}
+.switch .sl::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.sl{background:var(--accent)}
+.switch input:checked+.sl::before{transform:translateX(20px)}
+.range-row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-sub)}
+.range-row input[type=range]{flex:1;accent-color:var(--accent)}
+.set-input{width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--divider);background:var(--input-bg);color:var(--input-text);font-size:13px;outline:none;margin-top:6px}
+.acct-line{font-size:13.5px;margin-bottom:10px}
+.acct-line b{color:var(--accent)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{flex:1;min-width:120px;padding:9px 12px;border-radius:10px;background:var(--input-bg);font-size:13px;color:var(--text);transition:.15s;text-align:center}
+.btn:hover{filter:brightness(.94)}
+.btn.primary{background:var(--accent);color:var(--btn-text);font-weight:600}
+.btn.danger{color:#e05a5a}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:300;padding:18px}
+.modal{background:var(--panel);border-radius:16px;width:100%;max-width:420px;max-height:86vh;overflow-y:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal.wide{max-width:520px}
+.modal h3{margin:0 0 14px;font-size:16px;display:flex;align-items:center;justify-content:space-between}
+.modal h3 .x{width:28px;height:28px;border-radius:50%;background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-sub)}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12.5px;color:var(--text-sub);margin-bottom:5px}
+.form-row input[type=text],.form-row input[type=password],.form-row textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--divider);background:var(--input-bg);color:var(--input-text);font-size:14px;outline:none;resize:vertical}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--accent)}
+.avatar-edit{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px}
+.avatar-edit .av{width:88px;height:88px;border-radius:50%;overflow:hidden;border:2px solid var(--avatar-border);background:#eee;display:flex;align-items:center;justify-content:center}
+.avatar-edit .av img{width:100%;height:100%;object-fit:cover}
+.avatar-edit .av .ph{font-size:30px;color:#bbb}
+.avatar-btns{display:flex;gap:8px}
+.avatar-btns button{padding:6px 12px;border-radius:8px;background:var(--input-bg);font-size:12.5px;color:var(--text)}
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.theme-cell{border-radius:12px;padding:8px;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--input-bg)}
+.theme-cell.active{border-color:var(--accent)}
+.theme-swatch{width:100%;height:38px;border-radius:8px;display:flex;overflow:hidden}
+.theme-swatch span{flex:1}
+.theme-name{font-size:11px;color:var(--text-sub);text-align:center;line-height:1.2}
+.shape-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.shape-opt{padding:7px 12px;border-radius:10px;background:var(--input-bg);font-size:12.5px;color:var(--text);border:2px solid transparent}
+.shape-opt.active{border-color:var(--accent);font-weight:600}
+.color-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:13px}
+.color-row input[type=color]{width:44px;height:30px;border:none;border-radius:8px;background:none;cursor:pointer;padding:0}
+.mgr-block{margin-bottom:16px}
+.mgr-block h4{margin:0 0 8px;font-size:13.5px;color:var(--text);display:flex;align-items:center;gap:6px}
+.mgr-block .btn-row .btn{flex:1 1 calc(50% - 4px);min-width:0}
+.confirm-text{font-size:14px;line-height:1.6;margin-bottom:18px;white-space:pre-wrap}
+.confirm-btns{display:flex;gap:10px}
+.confirm-btns .btn{flex:1}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.8);color:#fff;padding:10px 20px;border-radius:22px;font-size:13px;opacity:0;transition:.25s;z-index:500;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+@media(max-width:520px){
+  #app{max-width:100vw;height:100vh;border-radius:0}
+  .bubble{font-size:14px}
+  .msg-body{max-width:calc(100% - 70px)}
+}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg viewBox="0 0 120 52" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="26" r="20" fill="#f3e7d7"/>
+        <circle cx="22" cy="24" r="12" fill="#e8c9a0"/>
+        <circle cx="96" cy="26" r="20" fill="#e7f0e2"/>
+        <circle cx="98" cy="24" r="12" fill="#a9c99a"/>
+        <path d="M46 26 h6 l4 -10 5 20 5 -14 4 4 h6" stroke="#c98b8b" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="login-title">夢女與夢角</h1>
+    <p class="login-sub">字卡傳訊 · 與你的夢角對話</p>
+    <input id="loginUser" class="login-input" placeholder="帳號名稱（必填）" autocomplete="username">
+    <input id="loginPass" class="login-input" type="password" placeholder="密碼（可選）" autocomplete="current-password">
+    <div id="loginErr" class="login-err"></div>
+    <button id="loginBtn" class="login-btn">登入 / 註冊</button>
+    <button id="guestBtn" class="login-guest">以訪客身分進入</button>
+    <p class="login-tip">首次使用即自動註冊。資料儲存於本機瀏覽器。</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="nav">
+    <div class="brand">🌙 夢女與夢角</div>
+    <div class="acct"><span class="dot"></span><span id="acctName">訪客</span></div>
+  </div>
+
+  <div id="chatPage" class="page">
+    <div id="chatTop">
+      <div class="hero-avatar" id="userHero">
+        <div class="av" id="userHeroAv"><div class="ph"></div></div>
+        <div class="nm" id="userHeroName">我</div>
+      </div>
+      <div class="ecg">
+        <svg viewBox="0 0 70 54" width="70" height="54">
+          <path d="M4 27 h12 l4 -10 5 20 5 -14 4 4 h12" stroke="#c98b8b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="hero-avatar" id="dreamHero">
+        <div class="av" id="dreamHeroAv"><div class="ph"></div></div>
+        <div class="nm" id="dreamHeroName">夢角</div>
+      </div>
+      <div class="func-grid">
+        <button class="func-btn" id="btnTarot" title="塔羅牌占卜">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="12" height="16" rx="2"/><path d="M8 8h4M8 12h4M8 16h2"/><path d="M16 7l2 2 3-3"/></svg>
+        </button>
+        <button class="func-btn" id="btnTheme" title="主題與氣泡設定">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
+        </button>
+        <button class="func-btn" id="btnLib" title="字卡庫設定">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
+        <button class="func-btn" id="btnData" title="資料管理">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="msgList"></div>
+
+    <div id="quoteBar" class="hidden">
+      <div class="qcontent" id="quoteContent"></div>
+      <button class="qclose" id="quoteClose">✕</button>
+    </div>
+
+    <div id="inputArea">
+      <button class="ibtn" id="btnContinue" title="讓夢角繼續說話">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+      </button>
+      <button class="ibtn" id="btnImage" title="發送圖片">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="ibtn" id="btnCall" title="發起通話">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg>
+      </button>
+      <button class="ibtn" id="btnSticker" title="發送表情包">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </button>
+      <input id="msgInput" placeholder="輸入訊息..." autocomplete="off">
+      <button id="sendBtn">發送</button>
+    </div>
+  </div>
+
+  <div id="libPage" class="page hidden">
+    <div class="lib-header">
+      <button class="lib-back" id="libBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="lib-title">字卡庫</div>
+    </div>
+    <div class="lib-tabs">
+      <button class="lib-tab active" data-tab="cards">字卡</button>
+      <button class="lib-tab" data-tab="kaomoji">顏文字</button>
+      <button class="lib-tab" data-tab="stickers">表情包</button>
+      <button class="lib-tab" data-tab="settings">聊天設定</button>
+    </div>
+    <div class="lib-panel" id="libPanelCards"></div>
+    <div class="lib-panel hidden" id="libPanelKaomoji"></div>
+    <div class="lib-panel hidden" id="libPanelStickers"></div>
+    <div class="lib-panel hidden" id="libPanelSettings"></div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toast"></div>
+<input type="file" id="hiddenFile" class="hidden">
+
+<script>
+/* ================= 全局状态 ================= */
+const DB_NAME='dream_chat_images', DB_STORE='images';
+let db=null;
+const S={
+  session:null, accounts:{}, data:null,
+  dbImg:{},
+  currentPage:'chat', currentLibTab:'cards',
+  quote:null, typingTimer:null, activeProactiveTimer:null,
+  longPressTimer:null, editingProfile:null, typingEl:null
+};
+
+/* ================= IndexedDB ================= */
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(DB_STORE))d.createObjectStore(DB_STORE)};
+    r.onsuccess=e=>{db=e.target.result;res()};
+    r.onerror=e=>rej(e);
+  });
+}
+function idbKey(imgKey){return (S.session&&S.session.username?S.session.username:'__guest__')+'::'+imgKey}
+function idbPut(imgKey,dataURL){return new Promise((res,rej)=>{const t=db.transaction(DB_STORE,'readwrite');t.objectStore(DB_STORE).put(dataURL,idbKey(imgKey));t.oncomplete=()=>res();t.onerror=e=>rej(e)})}
+function idbGet(imgKey){return new Promise((res)=>{const t=db.transaction(DB_STORE,'readonly');const rq=t.objectStore(DB_STORE).get(idbKey(imgKey));rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null)})}
+function idbDel(imgKey){return new Promise((res)=>{const t=db.transaction(DB_STORE,'readwrite');t.objectStore(DB_STORE).delete(idbKey(imgKey));t.oncomplete=()=>res();t.onerror=()=>res()})}
+async function idbDelPrefix(prefix){return new Promise((res)=>{const t=db.transaction(DB_STORE,'readwrite');const st=t.objectStore(DB_STORE);const rq=st.openCursor();const p=(S.session&&S.session.username?S.session.username:'__guest__')+'::'+prefix;const keys=[];rq.onsuccess=e=>{const c=e.target.result;if(c){if(c.key.startsWith(p))keys.push(c.key);c.continue()}else{keys.forEach(k=>st.delete(k))}};t.oncomplete=()=>res();t.onerror=()=>res()})}
+
+/* ================= 账号 / 持久化 ================= */
+function simpleHash(str){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
+function loadAccounts(){try{S.accounts=JSON.parse(localStorage.getItem('dream_chat_accounts')||'{}')}catch(e){S.accounts={}}}
+function saveAccounts(){localStorage.setItem('dream_chat_accounts',JSON.stringify(S.accounts))}
+function dataKey(u){return 'dream_chat_data_'+u}
+function defaultData(){return{
+  messages:[], user:{name:'我',avatarKey:null}, dream:{name:'夢角',avatarKey:null},
+  cards:[
+    '今天也想你了。','你在做什麼呢？','記得早點休息喔。','我一直都在這裡。','抱抱你，辛苦了。',
+    '今天的你也很棒。','要不要跟我說說心裡話？','我喜歡聽你說話。','不管發生什麼，我都站在你這邊。',
+    '想見你的心情，藏不住呢。','你笑起來一定很好看。','別擔心，有我在。',
+    '慢慢來，不用急。','謝謝你願意告訴我。','晚安，做個好夢。'
+  ],
+  kaomoji:['(๑•̀ㅂ•́)و✧','(｡･ω･｡)','(〃∀〃)','(๑´ㅂ`๑)','(つд⊂)','(๑•́ ₃ •̀๑)','(；´д｀)','(◍•ᴗ•◍)','(๑>ᴗ<๑)','♡','(´▽`ʃ♡ƪ)','(๑ơ ₃ ơ)♥','(っ˘ω˘ς)','(๑•̀ㅂ•́)و','(・∀・)','(´,,•ω•,,)♡','(๑￫ܫ￩)'],
+  stickers:[], settings:{
+    showRead:false, quoteEnabled:true, maxDelay:5,
+    proactive:false, proactiveMin:1, proactiveMax:300,
+    callProactive:false, typingTip:true, typingText:'夢角正在輸入...', typingAvatar:true
+  },
+  theme:'cream', shape:'tail', customColors:null, hasChatBgImage:false, bgImageKey:null, nextId:1,
+  starDeco:false
+}}
+
+async function loadData(){
+  const u=S.session.username;
+  let raw=localStorage.getItem(dataKey(u));
+  if(!raw){S.data=defaultData();localStorage.setItem(dataKey(u),JSON.stringify(S.data))}
+  else{try{S.data=JSON.parse(raw)}catch(e){S.data=defaultData()}}
+  const d=defaultData();
+  for(const k in d){if(!(k in S.data))S.data[k]=d[k]}
+  for(const k in d.settings){if(!(k in S.data.settings))S.data.settings[k]=d.settings[k]}
+  S.dbImg={};
+  const keys=new Set();
+  if(S.data.user.avatarKey)keys.add(S.data.user.avatarKey);
+  if(S.data.dream.avatarKey)keys.add(S.data.dream.avatarKey);
+  if(S.data.bgImageKey)keys.add(S.data.bgImageKey);
+  S.data.stickers.forEach(s=>{if(s.key)keys.add(s.key)});
+  for(const k of keys){const v=await idbGet(k);if(v)S.dbImg[k]=v}
+  for(const m of S.data.messages){if((m.type==='image'||m.type==='sticker')&&m.imageKey){const v=await idbGet(m.imageKey);if(v)S.dbImg[m.imageKey]=v}}
+}
+function saveData(){if(!S.data)return;localStorage.setItem(dataKey(S.session.username),JSON.stringify(S.data))}
+
+/* ================= 工具 ================= */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function now(){return Date.now()}
+function fmtTime(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function fmtDate(ts){const d=new Date(ts);return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')}
+function sameDay(a,b){const x=new Date(a),y=new Date(b);return x.getFullYear()===y.getFullYear()&&x.getMonth()===y.getMonth()&&x.getDate()===y.getDate()}
+function uid(){S.data.nextId=(S.data.nextId||1)+1;return S.data.nextId}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),1800)}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+/* ================= 主题 ================= */
+const THEMES={
+  cream:{name:'奶白色',vars:{'--bg':'#f7f5f0','--panel':'#ffffff','--text':'#2b2b2b','--text-sub':'#8a8a8a','--user-bubble':'#95ec69','--user-text':'#1a1a1a','--dream-bubble':'#ffffff','--dream-text':'#2b2b2b','--btn':'#95ec69','--btn-text':'#1a1a1a','--input-bg':'#f0eee9','--input-text':'#2b2b2b','--avatar-border':'#e2ddd4','--typing-bg':'#ffffff','--typing-text':'#8a8a8a','--nav-bg':'#ffffff','--divider':'#e8e4dc','--accent':'#95ec69','--tarot-bg':'linear-gradient(160deg,#fdf6ec,#efe4d2)','--tarot-card':'#fffdf8','--tarot-accent':'#b98b4e','--tarot-gold':'#c9a25e','--tarot-text':'#3a2f22'}},
+  black:{name:'黑芝麻色',vars:{'--bg':'#232323','--panel':'#2e2e2e','--text':'#ececec','--text-sub':'#a0a0a0','--user-bubble':'#3e7d4f','--user-text':'#ffffff','--dream-bubble':'#3a3a3a','--dream-text':'#ececec','--btn':'#3e7d4f','--btn-text':'#ffffff','--input-bg':'#3a3a3a','--input-text':'#ececec','--avatar-border':'#4a4a4a','--typing-bg':'#3a3a3a','--typing-text':'#b0b0b0','--nav-bg':'#2a2a2a','--divider':'#3f3f3f','--accent':'#5aa86f','--tarot-bg':'linear-gradient(160deg,#1d1d1d,#2b2b2b)','--tarot-card':'#333','--tarot-accent':'#c9a25e','--tarot-gold':'#d9b878','--tarot-text':'#eee'}},
+  matcha:{name:'抹茶綠色',vars:{'--bg':'#eef3e6','--panel':'#fbfdf7','--text':'#2f3b28','--text-sub':'#7c8a70','--user-bubble':'#b5d99c','--user-text':'#25301f','--dream-bubble':'#ffffff','--dream-text':'#2f3b28','--btn':'#b5d99c','--btn-text':'#25301f','--input-bg':'#e3ebd8','--input-text':'#2f3b28','--avatar-border':'#cdd9c0','--typing-bg':'#ffffff','--typing-text':'#7c8a70','--nav-bg':'#f5f9ee','--divider':'#dbe4d0','--accent':'#9ecb82','--tarot-bg':'linear-gradient(160deg,#f0f6e6,#dce8cf)','--tarot-card':'#fdfef8','--tarot-accent':'#7f9b63','--tarot-gold':'#b7c98f','--tarot-text':'#2f3b28'}},
+  pink:{name:'淡粉紅色',vars:{'--bg':'#fdf0f2','--panel':'#fffafb','--text':'#4a2e33','--text-sub':'#a9858d','--user-bubble':'#f7c6d0','--user-text':'#4a2e33','--dream-bubble':'#ffffff','--dream-text':'#4a2e33','--btn':'#f7c6d0','--btn-text':'#4a2e33','--input-bg':'#f7e4e8','--input-text':'#4a2e33','--avatar-border':'#f0d3d9','--typing-bg':'#ffffff','--typing-text':'#a9858d','--nav-bg':'#fff6f7','--divider':'#f2dde1','--accent':'#f2aab8','--tarot-bg':'linear-gradient(160deg,#fdf0f2,#f4dbe0)','--tarot-card':'#fffafb','--tarot-accent':'#c98b9a','--tarot-gold':'#e0b0bb','--tarot-text':'#4a2e33'}},
+  sunset:{name:'夕陽橙黃色',vars:{'--bg':'#fdf2e3','--panel':'#fffbf3','--text':'#4a3a26','--text-sub':'#a98f6e','--user-bubble':'#f9cf8f','--user-text':'#4a3a26','--dream-bubble':'#ffffff','--dream-text':'#4a3a26','--btn':'#f9cf8f','--btn-text':'#4a3a26','--input-bg':'#f7e8cf','--input-text':'#4a3a26','--avatar-border':'#f0dcc0','--typing-bg':'#ffffff','--typing-text':'#a98f6e','--nav-bg':'#fff8ee','--divider':'#f2e2c9','--accent':'#f4b860','--tarot-bg':'linear-gradient(160deg,#fdf2e3,#f3ddba)','--tarot-card':'#fffbf3','--tarot-accent':'#c98b4e','--tarot-gold':'#d9a85e','--tarot-text':'#4a3a26'}},
+  ocean:{name:'深海色',vars:{'--bg':'#e8f0f2','--panel':'#f7fbfc','--text':'#223a40','--text-sub':'#6d8a90','--user-bubble':'#9fd6d8','--user-text':'#1a2e33','--dream-bubble':'#ffffff','--dream-text':'#223a40','--btn':'#9fd6d8','--btn-text':'#1a2e33','--input-bg':'#dce9eb','--input-text':'#223a40','--avatar-border':'#c6dadc','--typing-bg':'#ffffff','--typing-text':'#6d8a90','--nav-bg':'#f0f7f8','--divider':'#d2e2e4','--accent':'#7fc4c7','--tarot-bg':'linear-gradient(160deg,#e8f0f2,#cfe2e6)','--tarot-card':'#f7fbfc','--tarot-accent':'#4e8b93','--tarot-gold':'#8fb9bd','--tarot-text':'#223a40'}},
+  purple:{name:'淡紫色',vars:{'--bg':'#f2eef7','--panel':'#fbf9fe','--text':'#3a2f47','--text-sub':'#8a7a9a','--user-bubble':'#d6c6ea','--user-text':'#3a2f47','--dream-bubble':'#ffffff','--dream-text':'#3a2f47','--btn':'#d6c6ea','--btn-text':'#3a2f47','--input-bg':'#e8e0f2','--input-text':'#3a2f47','--avatar-border':'#d8cde6','--typing-bg':'#ffffff','--typing-text':'#8a7a9a','--nav-bg':'#f7f3fb','--divider':'#e0d6ec','--accent':'#b99ee0','--tarot-bg':'linear-gradient(160deg,#f2eef7,#e0d6ec)','--tarot-card':'#fbf9fe','--tarot-accent':'#8a6fb0','--tarot-gold':'#b9a0d0','--tarot-text':'#3a2f47'}},
+  wine:{name:'烈酒紅色',vars:{'--bg':'#f6ecec','--panel':'#fdf8f8','--text':'#3f2226','--text-sub':'#9a7277','--user-bubble':'#e0a9ae','--user-text':'#3f2226','--dream-bubble':'#ffffff','--dream-text':'#3f2226','--btn':'#e0a9ae','--btn-text':'#3f2226','--input-bg':'#f0dede','--input-text':'#3f2226','--avatar-border':'#e8cccd','--typing-bg':'#ffffff','--typing-text':'#9a7277','--nav-bg':'#fbf3f3','--divider':'#ecd6d7','--accent':'#c97a80','--tarot-bg':'linear-gradient(160deg,#f6ecec,#e8d0d1)','--tarot-card':'#fdf8f8','--tarot-accent':'#8f4a50','--tarot-gold':'#c08a8e','--tarot-text':'#3f2226'}},
+  glass:{name:'朦朧玻璃色',vars:{'--bg':'#eef1f5','--panel':'rgba(255,255,255,.72)','--text':'#2c3440','--text-sub':'#7f8a99','--user-bubble':'rgba(150,220,150,.55)','--user-text':'#1c261c','--dream-bubble':'rgba(255,255,255,.7)','--dream-text':'#2c3440','--btn':'rgba(150,220,150,.6)','--btn-text':'#1c261c','--input-bg':'rgba(255,255,255,.5)','--input-text':'#2c3440','--avatar-border':'rgba(255,255,255,.8)','--typing-bg':'rgba(255,255,255,.7)','--typing-text':'#7f8a99','--nav-bg':'rgba(255,255,255,.6)','--divider':'rgba(180,190,200,.4)','--accent':'rgba(140,210,140,.7)','--tarot-bg':'linear-gradient(160deg,rgba(238,241,245,.9),rgba(220,228,236,.9))','--tarot-card':'rgba(255,255,255,.85)','--tarot-accent':'#6f8fa3','--tarot-gold':'#a9bcc7','--tarot-text':'#2c3440'}}
+};
+function applyTheme(){
+  const t=THEMES[S.data.theme]||THEMES.cream;
+  const vars=Object.assign({},t.vars);
+  if(S.data.customColors){for(const k in S.data.customColors)vars[k]=S.data.customColors[k]}
+  if(S.data.customColors&&S.data.customColors['--bg']){
+    const c=S.data.customColors['--bg'];
+    if(isDark(c)){vars['--text']='#f0f0f0';vars['--text-sub']='#b0b0b0'}
+    else{vars['--text']='#2b2b2b';vars['--text-sub']='#8a8a8a'}
+  }
+  const root=document.documentElement;
+  for(const k in vars)root.style.setProperty(k,vars[k]);
+  const shape=S.data.shape;
+  let ur='18px',dr='18px',ut='block',dt='block';
+  if(shape==='round'){ur='18px';dr='18px';ut='none';dt='none'}
+  else if(shape==='capsule'){ur='22px';dr='22px';ut='none';dt='none'}
+  else if(shape==='rect'){ur='6px';dr='6px';ut='none';dt='none'}
+  root.style.setProperty('--bubble-radius',ur);
+  root.style.setProperty('--user-tail',ut);
+  root.style.setProperty('--dream-tail',dt);
+  root.style.setProperty('--star-deco',S.data.starDeco?'block':'none');
+}
+function isDark(hex){
+  let c=hex.replace('#','');
+  if(c.length===3)c=c.split('').map(x=>x+x).join('');
+  const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
+  return (0.299*r+0.587*g+0.114*b)<128;
+}
+
+/* ================= 渲染聊天 ================= */
+function avatarHTML(key){
+  if(key&&S.dbImg[key])return `<img src="${S.dbImg[key]}" alt="">`;
+  return `<div class="ph" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:16px">✦</div>`;
+}
+function renderChatTop(){
+  const d=S.data;
+  document.getElementById('userHeroName').textContent=d.user.name||'我';
+  document.getElementById('dreamHeroName').textContent=d.dream.name||'夢角';
+  document.getElementById('userHeroAv').innerHTML=avatarHTML(d.user.avatarKey);
+  document.getElementById('dreamHeroAv').innerHTML=avatarHTML(d.dream.avatarKey);
+}
+function renderMessages(){
+  const list=document.getElementById('msgList');
+  const d=S.data;
+  list.innerHTML='';
+  let lastTs=0;
+  if(d.hasChatBgImage&&d.bgImageKey&&S.dbImg[d.bgImageKey]){
+    list.style.backgroundImage=`url(${S.dbImg[d.bgImageKey]})`;
+  }else{
+    list.style.backgroundImage='none';
+  }
+  d.messages.forEach(m=>{
+    if(m.type==='sys'){
+      if(!sameDay(lastTs,m.ts)){list.appendChild(dateDiv(m.ts));lastTs=m.ts}
+      const row=document.createElement('div');row.className='sys-center';
+      row.innerHTML=`<div class="sys-pill">${esc(m.text)}</div>`;
+      list.appendChild(row);return;
+    }
+    if(!sameDay(lastTs,m.ts)){list.appendChild(dateDiv(m.ts));lastTs=m.ts}
+    const row=document.createElement('div');
+    row.className='msg-row '+(m.from==='user'?'user':'dream');
+    row.dataset.id=m.id;
+    const isUser=m.from==='user';
+    const who=isUser?d.user:d.dream;
+    let content='';
+    if(m.quote){content+=`<div class="quote"><b>${esc(m.quote.name)}</b>：${esc(m.quote.text)}</div>`}
+    if(m.type==='image'){
+      const src=m.imageKey&&S.dbImg[m.imageKey]?S.dbImg[m.imageKey]:'';
+      content+=src?`<img class="chat-img" src="${src}" alt="">`:`<span style="color:#999">[圖片]</span>`;
+    }else if(m.type==='sticker'){
+      const src=m.imageKey&&S.dbImg[m.imageKey]?S.dbImg[m.imageKey]:'';
+      content+=src?`<img class="msg-sticker" src="${src}" alt="">`:`<span style="color:#999">[表情]</span>`;
+    }else{
+      content+=esc(m.text);
+    }
+    let readHtml='';
+    if(d.settings.showRead&&isUser){readHtml=`<div class="read-mark">${m.read?'已讀':'未讀'}</div>`}
+    const starCls=(!isUser&&d.starDeco)?' star-deco':'';
+    row.innerHTML=`
+      <div class="mav">${avatarHTML(who.avatarKey)}</div>
+      <div class="msg-body">
+        <div class="msg-meta">
+          <span class="msg-name">${esc(who.name||(isUser?'我':'夢角'))}</span>
+          <span class="msg-time">${fmtTime(m.ts)}</span>
+        </div>
+        <div class="bubble${starCls}">${content}</div>
+        ${readHtml}
+      </div>`;
+    row.addEventListener('contextmenu',e=>{e.preventDefault();openCtx(e.clientX,e.clientY,m.id)});
+    row.addEventListener('touchstart',e=>{
+      const t=e.touches[0];
+      S.longPressTimer=setTimeout(()=>{S.longPressTimer=null;openCtx(t.clientX,t.clientY,m.id)},500);
+    },{passive:true});
+    row.addEventListener('touchend',()=>{if(S.longPressTimer){clearTimeout(S.longPressTimer);S.longPressTimer=null}});
+    row.addEventListener('touchmove',()=>{if(S.longPressTimer){clearTimeout(S.longPressTimer);S.longPressTimer=null}});
+    list.appendChild(row);
+  });
+  if(S.typingEl)list.appendChild(S.typingEl);
+  list.scrollTop=list.scrollHeight;
+}
+function dateDiv(ts){const d=document.createElement('div');d.className='date-divider';d.innerHTML=`<span>${fmtDate(ts)}</span>`;return d}
+
+/* ================= 发消息 ================= */
+function pushMsg(m){
+  m.ts=m.ts||now();
+  m.id=uid();
+  S.data.messages.push(m);
+  saveData();
+  renderMessages();
+  return m;
+}
+function sendUserText(){
+  const inp=document.getElementById('msgInput');
+  const text=inp.value.trim();
+  if(!text)return;
+  inp.value='';inp.style.height='38px';
+  const m={from:'user',type:'text',text,read:false};
+  if(S.quote){m.quote={name:S.quote.name,text:S.quote.text};S.quote=null;hideQuoteBar()}
+  pushMsg(m);
+  scheduleDreamReply();
+}
+function sendUserImage(dataURL){
+  const key='chat_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  idbPut(key,dataURL).then(()=>{S.dbImg[key]=dataURL});
+  const m={from:'user',type:'image',imageKey:key,read:false};
+  if(S.quote){m.quote={name:S.quote.name,text:S.quote.text};S.quote=null;hideQuoteBar()}
+  pushMsg(m);
+  scheduleDreamReply();
+}
+function sendUserSticker(sticker){
+  const m={from:'user',type:'sticker',imageKey:sticker.key,read:false};
+  pushMsg(m);
+  scheduleDreamReply();
+}
+
+/* ================= 梦角回复 ================= */
+function dreamPickReply(){
+  const d=S.data;
+  const pool=[].concat(d.cards||[],d.kaomoji||[]);
+  if(pool.length===0)return '……';
+  return pick(pool);
+}
+function showTyping(){
+  hideTyping();
+  if(!S.data.settings.typingTip)return;
+  const el=document.createElement('div');el.id='typingTip';
+  const avHtml=S.data.settings.typingAvatar?`<div class="tav">${avatarHTML(S.data.dream.avatarKey)}</div>`:'';
+  el.innerHTML=`${avHtml}<span class="ttxt">${esc(S.data.settings.typingText||'夢角正在輸入...')}</span><span class="dots"><i></i><i></i><i></i></span>`;
+  el.addEventListener('click',()=>{
+    const t=prompt('修改提示文字：',S.data.settings.typingText||'夢角正在輸入...');
+    if(t!=null&&t.trim()!==''){S.data.settings.typingText=t.trim();saveData();const tt=el.querySelector('.ttxt');if(tt)tt.textContent=t.trim()}
+  });
+  S.typingEl=el;
+  const list=document.getElementById('msgList');
+  list.appendChild(el);
+  list.scrollTop=list.scrollHeight;
+}
+function hideTyping(){if(S.typingEl&&S.typingEl.parentNode)S.typingEl.parentNode.removeChild(S.typingEl);S.typingEl=null}
+function scheduleDreamReply(){
+  const maxDelay=Math.max(1,parseInt(S.data.settings.maxDelay)||5);
+  const delay=randInt(1,maxDelay)*1000;
+  clearTimeout(S.typingTimer);
+  S.typingTimer=setTimeout(()=>{
+    showTyping();
+    const typeDur=randInt(1000,2500);
+    clearTimeout(S.typingTimer);
+    S.typingTimer=setTimeout(()=>{
+      hideTyping();
+      let quote=null;
+      if(S.data.settings.quoteEnabled&&Math.random()<0.4){
+        const users=S.data.messages.filter(x=>x.from==='user'&&(x.type==='text'||x.type==='image'||x.type==='sticker'));
+        if(users.length){
+          const q=pick(users);
+          quote={name:S.data.user.name||'我',text:q.type==='text'?q.text:(q.type==='image'?'[圖片]':'[表情]')};
+        }
+      }
+      const m={from:'dream',type:'text',text:dreamPickReply(),read:false};
+      if(quote)m.quote=quote;
+      pushMsg(m);
+    },typeDur);
+  },delay);
+}
+function triggerContinue(){scheduleDreamReply()}
+
+/* ================= 引用 / 右键菜单 ================= */
+function openCtx(x,y,id){
+  closeCtx();
+  S.ctxMsgId=id;
+  const menu=document.createElement('div');menu.id='ctxMenu';
+  menu.innerHTML=`
+    <button data-act="quote">💬 引用</button>
+    <button data-act="copy">📋 複製</button>
+    <button data-act="del">🗑️ 刪除</button>`;
+  menu.style.left=Math.min(x,window.innerWidth-140)+'px';
+  menu.style.top=Math.min(y,window.innerHeight-140)+'px';
+  document.body.appendChild(menu);
+  menu.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    const act=b.dataset.act;const m=S.data.messages.find(x=>x.id===id);
+    if(!m){closeCtx();return}
+    if(act==='quote'){
+      const txt=m.type==='text'?m.text:(m.type==='image'?'[圖片]':(m.type==='sticker'?'[表情]':'[系統]'));
+      S.quote={name:m.from==='user'?(S.data.user.name||'我'):(S.data.dream.name||'夢角'),text:txt};
+      showQuoteBar();
+    }else if(act==='copy'){
+      if(m.type==='text'){navigator.clipboard&&navigator.clipboard.writeText(m.text).then(()=>toast('已複製')).catch(()=>toast('複製失敗'))}
+      else toast('圖片無法複製');
+    }else if(act==='del'){
+      confirmDialog('刪除訊息','確定要刪除這則訊息嗎？',()=>{
+        if(m.type==='image'||m.type==='sticker'){if(m.imageKey)idbDel(m.imageKey);delete S.dbImg[m.imageKey]}
+        S.data.messages=S.data.messages.filter(x=>x.id!==id);saveData();renderMessages();
+      });
+    }
+    closeCtx();
+  }));
+  setTimeout(()=>document.addEventListener('click',closeCtx,{once:true}),0);
+}
+function closeCtx(){const e=document.getElementById('ctxMenu');if(e)e.remove()}
+function showQuoteBar(){
+  if(!S.quote)return;
+  document.getElementById('quoteBar').classList.remove('hidden');
+  document.getElementById('quoteContent').textContent=`${S.quote.name}：${S.quote.text}`;
+}
+function hideQuoteBar(){document.getElementById('quoteBar').classList.add('hidden');S.quote=null}
+
+/* ================= 弹窗系统 ================= */
+function modal(html,opts){
+  opts=opts||{};
+  const root=document.getElementById('modalRoot');
+  const ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML=`<div class="modal ${opts.wide?'wide':''}">${html}</div>`;
+  root.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov&&!opts.noClose)ov.remove()});
+  const x=ov.querySelector('.x');if(x)x.addEventListener('click',()=>ov.remove());
+  return {ov,close:()=>ov.remove()};
+}
+function confirmDialog(title,text,onOk){
+  const {ov,close}=modal(`<h3>${esc(title)}<button class="x">✕</button></h3><div class="confirm-text">${esc(text)}</div><div class="confirm-btns"><button class="btn" id="cNo">取消</button><button class="btn danger" id="cYes">確定</button></div>`);
+  ov.querySelector('#cNo').onclick=close;
+  ov.querySelector('#cYes').onclick=()=>{close();onOk&&onOk()};
+}
+
+/* ================= 编辑资料（头像直接导入，不裁剪） ================= */
+function openProfileEdit(which){
+  S.editingProfile=which;
+  const isUser=which==='user';
+  const who=isUser?S.data.user:S.data.dream;
+  const avHtml=avatarHTML(who.avatarKey);
+  const {ov,close}=modal(`
+    <h3>編輯${isUser?'用戶':'夢角'}資料<button class="x">✕</button></h3>
+    <div class="avatar-edit">
+      <div class="av" id="peAv">${avHtml}</div>
+      <div class="avatar-btns">
+        <button id="peUpload">上傳頭像</button>
+        <button id="peRemove">移除頭像</button>
+      </div>
+    </div>
+    <div class="form-row"><label>名字</label><input type="text" id="peName" value="${esc(who.name||'')}" maxlength="20"></div>
+    <div class="btn-row"><button class="btn primary" id="peSave">儲存</button></div>`);
+  ov.querySelector('#peUpload').onclick=()=>{
+    const inp=document.getElementById('hiddenFile');
+    inp.accept='image/*';inp.value='';inp.onchange=()=>{
+      const f=inp.files[0];if(!f)return;
+      const rd=new FileReader();
+      rd.onload=()=>{
+        const key='avatar_'+which+'_'+Date.now();
+        idbPut(key,rd.result).then(()=>{
+          if(who.avatarKey)idbDel(who.avatarKey);
+          S.dbImg[key]=rd.result;
+          who.avatarKey=key;
+          saveData();renderChatTop();renderMessages();
+          ov.querySelector('#peAv').innerHTML=avatarHTML(key);
+          toast('頭像已更新');
+        });
+      };
+      rd.readAsDataURL(f);
+    };
+    inp.click();
+  };
+  ov.querySelector('#peRemove').onclick=()=>{
+    if(who.avatarKey)idbDel(who.avatarKey);
+    delete S.dbImg[who.avatarKey];
+    who.avatarKey=null;saveData();renderChatTop();renderMessages();
+    ov.querySelector('#peAv').innerHTML=avatarHTML(null);
+  };
+  ov.querySelector('#peSave').onclick=()=>{
+    who.name=ov.querySelector('#peName').value.trim()||(isUser?'我':'夢角');
+    saveData();renderChatTop();renderMessages();close();
+  };
+}
+
+/* ================= 主题弹窗 ================= */
+function openThemeModal(){
+  const cur=S.data.theme;
+  const themeCells=Object.keys(THEMES).map(k=>{
+    const t=THEMES[k];const v=t.vars;
+    return `<button class="theme-cell ${k===cur?'active':''}" data-theme="${k}">
+      <div class="theme-swatch"><span style="background:${v['--bg']}"></span><span style="background:${v['--user-bubble']}"></span><span style="background:${v['--dream-bubble']}"></span></div>
+      <div class="theme-name">${t.name}</div></button>`;
+  }).join('');
+  const shapes=[['tail','尖尾'],['round','圓角'],['capsule','膠囊'],['rect','長方形']].map(s=>`<button class="shape-opt ${S.data.shape===s[0]?'active':''}" data-shape="${s[0]}">${s[1]}</button>`).join('');
+  const cc=S.data.customColors||{};
+  const {ov,close}=modal(`
+    <h3>主題與氣泡設定<button class="x">✕</button></h3>
+    <div class="theme-grid">${themeCells}</div>
+    <div class="form-row"><label>氣泡形狀</label><div class="shape-row">${shapes}</div></div>
+    <div class="set-block" style="margin-bottom:12px">
+      <h4>✨ 裝飾</h4>
+      <div class="set-row"><div>星星裝飾<div class="sub">夢角氣泡右上角顯示星形，顏色跟隨主題</div></div><label class="switch"><input type="checkbox" id="setStar" ${S.data.starDeco?'checked':''}><span class="sl"></span></label></div>
+    </div>
+    <div class="set-block" style="margin-bottom:0">
+      <h4>自訂顏色</h4>
+      <div class="color-row"><span>背景色</span><input type="color" id="ccBg" value="${cc['--bg']||'#f7f5f0'}"></div>
+      <div class="color-row"><span>我的氣泡</span><input type="color" id="ccUser" value="${cc['--user-bubble']||'#95ec69'}"></div>
+      <div class="color-row"><span>夢角氣泡</span><input type="color" id="ccDream" value="${cc['--dream-bubble']||'#ffffff'}"></div>
+      <div class="color-row"><span>按鈕顏色</span><input type="color" id="ccBtn" value="${cc['--btn']||'#95ec69'}"></div>
+      <div class="btn-row" style="margin-top:10px"><button class="btn" id="ccReset">清除自訂</button></div>
+    </div>
+    <div class="set-block" style="margin-top:12px;margin-bottom:0">
+      <h4>聊天背景圖</h4>
+      <div class="btn-row">
+        <button class="btn" id="bgUpload">上傳背景圖</button>
+        <button class="btn danger" id="bgRemove">移除背景</button>
+      </div>
+    </div>`,{wide:true});
+  ov.querySelectorAll('.theme-cell').forEach(b=>b.onclick=()=>{
+    S.data.theme=b.dataset.theme;S.data.customColors=null;saveData();applyTheme();
+    ov.querySelectorAll('.theme-cell').forEach(x=>x.classList.toggle('active',x===b));
+  });
+  ov.querySelectorAll('.shape-opt').forEach(b=>b.onclick=()=>{
+    S.data.shape=b.dataset.shape;saveData();applyTheme();
+    ov.querySelectorAll('.shape-opt').forEach(x=>x.classList.toggle('active',x===b));
+  });
+  ov.querySelector('#setStar').onchange=e=>{S.data.starDeco=e.target.checked;saveData();applyTheme();renderMessages()};
+  function readColors(){
+    const c={};
+    c['--bg']=ov.querySelector('#ccBg').value;
+    c['--user-bubble']=ov.querySelector('#ccUser').value;
+    c['--dream-bubble']=ov.querySelector('#ccDream').value;
+    c['--btn']=ov.querySelector('#ccBtn').value;
+    c['--accent']=c['--btn'];
+    S.data.customColors=c;saveData();applyTheme();renderMessages();
+  }
+  ['ccBg','ccUser','ccDream','ccBtn'].forEach(id=>ov.querySelector('#'+id).addEventListener('input',readColors));
+  ov.querySelector('#ccReset').onclick=()=>{S.data.customColors=null;saveData();applyTheme();renderMessages();close();openThemeModal()};
+  // 背景图直接导入，不裁剪
+  ov.querySelector('#bgUpload').onclick=()=>{
+    const inp=document.getElementById('hiddenFile');
+    inp.accept='image/*';inp.value='';inp.onchange=()=>{
+      const f=inp.files[0];if(!f)return;
+      const rd=new FileReader();
+      rd.onload=()=>{
+        const key='bg_image';
+        idbPut(key,rd.result).then(()=>{
+          if(S.data.bgImageKey&&S.data.bgImageKey!==key)idbDel(S.data.bgImageKey);
+          S.dbImg[key]=rd.result;
+          S.data.bgImageKey=key;S.data.hasChatBgImage=true;
+          saveData();renderMessages();toast('背景已更新');
+        });
+      };
+      rd.readAsDataURL(f);
+    };
+    inp.click();
+  };
+  ov.querySelector('#bgRemove').onclick=()=>{
+    if(S.data.bgImageKey)idbDel(S.data.bgImageKey);
+    delete S.dbImg[S.data.bgImageKey];
+    S.data.bgImageKey=null;S.data.hasChatBgImage=false;saveData();renderMessages();toast('背景已移除');
+  };
+}
+
+/* ================= 资料管理 ================= */
+function openDataManager(){
+  const {ov,close}=modal(`
+    <h3>資料管理<button class="x">✕</button></h3>
+    <div class="mgr-block"><h4>💾 備份</h4><div class="btn-row">
+      <button class="btn" data-act="backup-all">備份全部資料</button>
+      <button class="btn" data-act="backup-chat">僅備份聊天記錄</button>
+      <button class="btn" data-act="backup-lib">僅備份字卡庫</button>
+    </div></div>
+    <div class="mgr-block"><h4>📥 匯入</h4><div class="btn-row">
+      <button class="btn" data-act="import-all">匯入全部資料</button>
+      <button class="btn" data-act="import-chat">僅匯入聊天記錄</button>
+      <button class="btn" data-act="import-lib">僅匯入字卡庫</button>
+    </div></div>
+    <div class="mgr-block"><h4>🧹 清除</h4><div class="btn-row">
+      <button class="btn danger" data-act="clear-chat">清除聊天記錄</button>
+      <button class="btn danger" data-act="clear-lib">清除字卡庫</button>
+    </div></div>
+    <div class="mgr-block"><h4>♻️ 重置</h4><div class="btn-row">
+      <button class="btn danger" data-act="reset">重置網頁設定</button>
+    </div></div>`,{wide:true});
+  ov.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const act=b.dataset.act;
+    if(act==='backup-all')backupAll();
+    else if(act==='backup-chat')backupChat();
+    else if(act==='backup-lib')backupLib();
+    else if(act==='import-all')importFile('all');
+    else if(act==='import-chat')importFile('chat');
+    else if(act==='import-lib')importFile('lib');
+    else if(act==='clear-chat')confirmDialog('清除聊天記錄','確定清除所有聊天記錄？此操作無法復原。',()=>{S.data.messages.forEach(m=>{if(m.imageKey)idbDel(m.imageKey)});S.data.messages=[];saveData();renderMessages();toast('聊天記錄已清除')});
+    else if(act==='clear-lib')confirmDialog('清除字卡庫','確定清除所有字卡、顏文字、表情包？',()=>{S.data.cards=[];S.data.kaomoji=[];S.data.stickers.forEach(s=>{if(s.key)idbDel(s.key)});S.data.stickers=[];saveData();toast('字卡庫已清除')});
+    else if(act==='reset')confirmDialog('重置網頁設定','確定恢復所有預設值？將清空聊天記錄、字卡庫、頭像、背景圖與設定。',()=>resetAll());
+  });
+  function backupAll(){downloadJSON({type:'all',data:S.data},'dream_chat_all_'+Date.now()+'.json')}
+  function backupChat(){downloadJSON({type:'chat',messages:S.data.messages,user:S.data.user,dream:S.data.dream},'dream_chat_chat_'+Date.now()+'.json')}
+  function backupLib(){downloadJSON({type:'lib',cards:S.data.cards,kaomoji:S.data.kaomoji,stickers:S.data.stickers.map(s=>({key:s.key}))},'dream_chat_lib_'+Date.now()+'.json')}
+  function downloadJSON(obj,name){
+    const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  }
+  function importFile(mode){
+    const inp=document.getElementById('hiddenFile');
+    inp.accept='.json,application/json';inp.value='';inp.onchange=()=>{
+      const f=inp.files[0];if(!f)return;
+      const rd=new FileReader();rd.onload=()=>{try{handleImport(JSON.parse(rd.result),mode)}catch(e){toast('檔案格式錯誤')}};rd.readAsText(f);
+    };inp.click();
+  }
+  async function handleImport(obj,mode){
+    if(mode==='all'){
+      if(!obj.data){toast('無效的備份檔');return}
+      S.data=Object.assign(defaultData(),obj.data);
+      saveData();await loadData();applyTheme();renderChatTop();renderMessages();renderLibAll();
+      toast('全部資料已匯入');
+    }else if(mode==='chat'){
+      if(obj.messages){S.data.messages=obj.messages;if(obj.user)S.data.user=obj.user;if(obj.dream)S.data.dream=obj.dream;saveData();renderChatTop();renderMessages();toast('聊天記錄已匯入')}
+    }else if(mode==='lib'){
+      if(obj.cards)S.data.cards=obj.cards;
+      if(obj.kaomoji)S.data.kaomoji=obj.kaomoji;
+      saveData();renderLibAll();toast('字卡庫已匯入');
+    }
+  }
+  async function resetAll(){
+    await idbDelPrefix('');
+    S.dbImg={};
+    S.data=defaultData();
+    saveData();applyTheme();renderChatTop();renderMessages();renderLibAll();
+    toast('已重置');close();
+  }
+}
+
+/* ================= 字卡库渲染 ================= */
+function renderLibAll(){renderCardsPanel();renderKaomojiPanel();renderStickersPanel();renderSettingsPanel()}
+function renderCardsPanel(){
+  const el=document.getElementById('libPanelCards');
+  const cards=S.data.cards;
+  el.innerHTML=`
+    <div class="toolbar">
+      <label class="sel-all"><input type="checkbox" id="cardsSelAll"> 全選</label>
+      <span class="badge">${cards.length} 則</span>
+      <span class="spacer"></span>
+      <button class="tbtn" id="cardsImportFile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>匯入檔案</button>
+      <button class="tbtn" id="cardsImportPaste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>匯入</button>
+      <button class="tbtn" id="cardsExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>匯出</button>
+      <button class="tbtn" id="cardsDedup">🧹 自動去重</button>
+      <button class="tbtn danger" id="cardsDel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>刪除選中</button>
+    </div>
+    <div>${cards.length?cards.map((c,i)=>`<div class="list-item"><input type="checkbox" class="card-chk" data-i="${i}"><div class="txt">${esc(c)}</div><button class="del card-del" data-i="${i}">✕</button></div>`).join(''):'<div class="empty-hint">尚無字卡，請匯入或新增。</div>'}</div>`;
+  el.querySelector('#cardsSelAll').onchange=e=>{el.querySelectorAll('.card-chk').forEach(c=>c.checked=e.target.checked)};
+  el.querySelector('#cardsImportFile').onclick=()=>{
+    const inp=document.getElementById('hiddenFile');inp.accept='.txt,text/plain';inp.value='';inp.onchange=()=>{
+      const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{mergeCards(rd.result.split(/\r?\n/).map(s=>s.trim()).filter(Boolean))};rd.readAsText(f);
+    };inp.click();
+  };
+  el.querySelector('#cardsImportPaste').onclick=()=>{
+    const {ov,close}=modal(`<h3>匯入字卡<button class="x">✕</button></h3>
+      <div class="form-row"><label>每行一則字卡</label><textarea id="pasteArea" rows="8" placeholder="今天也想你了。&#10;你在做什麼呢？"></textarea></div>
+      <div class="btn-row"><button class="btn" id="pCancel">取消</button><button class="btn primary" id="pOk">匯入</button></div>`);
+    ov.querySelector('#pCancel').onclick=close;
+    ov.querySelector('#pOk').onclick=()=>{mergeCards(ov.querySelector('#pasteArea').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean));close()};
+  };
+  el.querySelector('#cardsExport').onclick=()=>{
+    const blob=new Blob([S.data.cards.join('\n')],{type:'text/plain'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dream_cards_'+Date.now()+'.txt';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  };
+  el.querySelector('#cardsDedup').onclick=()=>{const before=S.data.cards.length;S.data.cards=[...new Set(S.data.cards)];saveData();renderCardsPanel();toast(`去重完成，移除 ${before-S.data.cards.length} 則`)};
+  el.querySelector('#cardsDel').onclick=()=>{
+    const sel=[...el.querySelectorAll('.card-chk:checked')].map(c=>+c.dataset.i);
+    if(!sel.length){toast('請先選擇');return}
+    confirmDialog('刪除字卡',`確定刪除選中的 ${sel.length} 則字卡？`,()=>{S.data.cards=S.data.cards.filter((_,i)=>!sel.includes(i));saveData();renderCardsPanel()});
+  };
+  el.querySelectorAll('.card-del').forEach(b=>b.onclick=()=>{S.data.cards.splice(+b.dataset.i,1);saveData();renderCardsPanel()});
+}
+function mergeCards(lines){
+  const ex=new Set(S.data.cards);let n=0;
+  lines.forEach(l=>{if(!ex.has(l)){ex.add(l);S.data.cards.push(l);n++}});
+  saveData();renderCardsPanel();toast(`新增 ${n} 則字卡`);
+}
+
+function renderKaomojiPanel(){
+  const el=document.getElementById('libPanelKaomoji');
+  const list=S.data.kaomoji;
+  el.innerHTML=`
+    <div class="toolbar">
+      <label class="sel-all"><input type="checkbox" id="kaoSelAll"> 全選</label>
+      <span class="badge">${list.length} 則</span>
+      <span class="spacer"></span>
+      <button class="tbtn" id="kaoAdd">＋ 新增</button>
+      <button class="tbtn" id="kaoImport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>匯入</button>
+      <button class="tbtn" id="kaoExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>匯出</button>
+      <button class="tbtn danger" id="kaoDel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>刪除選中</button>
+    </div>
+    <div>${list.length?list.map((c,i)=>`<div class="list-item"><input type="checkbox" class="kao-chk" data-i="${i}"><div class="txt">${esc(c)}</div><button class="del kao-del" data-i="${i}">✕</button></div>`).join(''):'<div class="empty-hint">尚無顏文字。</div>'}</div>`;
+  el.querySelector('#kaoSelAll').onchange=e=>el.querySelectorAll('.kao-chk').forEach(c=>c.checked=e.target.checked);
+  el.querySelector('#kaoAdd').onclick=()=>{
+    const v=prompt('新增顏文字/Emoji：');if(v==null)return;const s=v.trim();if(!s)return;
+    if(S.data.kaomoji.includes(s)){toast('已存在');return}
+    S.data.kaomoji.push(s);saveData();renderKaomojiPanel();
+  };
+  el.querySelector('#kaoImport').onclick=()=>{
+    const {ov,close}=modal(`<h3>匯入顏文字<button class="x">✕</button></h3>
+      <div class="form-row"><label>每行一則</label><textarea id="kArea" rows="8"></textarea></div>
+      <div class="btn-row"><button class="btn" id="kC">取消</button><button class="btn primary" id="kOk">匯入</button></div>`);
+    ov.querySelector('#kC').onclick=close;
+    ov.querySelector('#kOk').onclick=()=>{
+      const lines=ov.querySelector('#kArea').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const ex=new Set(S.data.kaomoji);let n=0;lines.forEach(l=>{if(!ex.has(l)){ex.add(l);S.data.kaomoji.push(l);n++}});
+      saveData();renderKaomojiPanel();close();toast(`新增 ${n} 則`);
+    };
+  };
+  el.querySelector('#kaoExport').onclick=()=>{
+    const blob=new Blob([S.data.kaomoji.join('\n')],{type:'text/plain'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dream_kaomoji_'+Date.now()+'.txt';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  };
+  el.querySelector('#kaoDel').onclick=()=>{
+    const sel=[...el.querySelectorAll('.kao-chk:checked')].map(c=>+c.dataset.i);
+    if(!sel.length){toast('請先選擇');return}
+    confirmDialog('刪除顏文字',`確定刪除選中的 ${sel.length} 則？`,()=>{S.data.kaomoji=S.data.kaomoji.filter((_,i)=>!sel.includes(i));saveData();renderKaomojiPanel()});
+  };
+  el.querySelectorAll('.kao-del').forEach(b=>b.onclick=()=>{S.data.kaomoji.splice(+b.dataset.i,1);saveData();renderKaomojiPanel()});
+}
+
+function renderStickersPanel(){
+  const el=document.getElementById('libPanelStickers');
+  const list=S.data.stickers;
+  el.innerHTML=`
+    <div class="toolbar">
+      <label class="sel-all"><input type="checkbox" id="stkSelAll"> 全選</label>
+      <span class="badge">${list.length} 個</span>
+      <span class="spacer"></span>
+      <button class="tbtn" id="stkAdd">＋ 新增表情包</button>
+      <button class="tbtn" id="stkExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>匯出</button>
+      <button class="tbtn danger" id="stkDel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>刪除選中</button>
+    </div>
+    <div>${list.length?list.map((s,i)=>{
+      const src=S.dbImg[s.key]||'';
+      return `<div class="list-item"><input type="checkbox" class="stk-chk" data-i="${i}"><img class="thumb" src="${src}" alt=""><div class="txt">表情 ${i+1}</div><button class="del stk-del" data-i="${i}">✕</button></div>`;
+    }).join(''):'<div class="empty-hint">尚無表情包。</div>'}</div>`;
+  el.querySelector('#stkSelAll').onchange=e=>el.querySelectorAll('.stk-chk').forEach(c=>c.checked=e.target.checked);
+  el.querySelector('#stkAdd').onclick=()=>{
+    const inp=document.getElementById('hiddenFile');
+    inp.accept='image/*';inp.multiple=true;inp.value='';inp.onchange=async()=>{
+      const files=[...inp.files].slice(0,100);if(!files.length)return;
+      const dataURLs=await Promise.all(files.map(f=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f)})));
+      const existingData=new Set(S.data.stickers.map(s=>S.dbImg[s.key]).filter(Boolean));
+      let added=0;
+      for(const d of dataURLs){
+        if(existingData.has(d))continue;existingData.add(d);
+        const key='sticker_'+Date.now()+'_'+Math.floor(Math.random()*99999);
+        await idbPut(key,d);S.dbImg[key]=d;S.data.stickers.push({key});added++;
+      }
+      saveData();renderStickersPanel();toast(`新增 ${added} 個表情包`);
+    };inp.click();
+  };
+  el.querySelector('#stkExport').onclick=()=>{
+    const blob=new Blob([JSON.stringify({type:'stickers',stickers:list.map(s=>({key:s.key}))},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dream_stickers_'+Date.now()+'.json';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  };
+  el.querySelector('#stkDel').onclick=()=>{
+    const sel=[...el.querySelectorAll('.stk-chk:checked')].map(c=>+c.dataset.i);
+    if(!sel.length){toast('請先選擇');return}
+    confirmDialog('刪除表情包',`確定刪除選中的 ${sel.length} 個表情包？`,()=>{
+      sel.forEach(i=>{const s=S.data.stickers[i];if(s&&s.key){idbDel(s.key);delete S.dbImg[s.key]}});
+      S.data.stickers=S.data.stickers.filter((_,i)=>!sel.includes(i));saveData();renderStickersPanel();
+    });
+  };
+  el.querySelectorAll('.stk-del').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;const s=S.data.stickers[i];if(s&&s.key){idbDel(s.key);delete S.dbImg[s.key]}
+    S.data.stickers.splice(i,1);saveData();renderStickersPanel();
+  });
+}
+
+function renderSettingsPanel(){
+  const el=document.getElementById('libPanelSettings');
+  const st=S.data.settings;
+  const acct=S.session.username==='__guest__'?'訪客':S.session.username;
+  const type=S.session.username==='__guest__'?'訪客':'已登入';
+  el.innerHTML=`
+    <div class="set-block">
+      <h4>👤 帳號</h4>
+      <div class="acct-line">目前帳號：<b>${esc(acct)}</b>（${type}）</div>
+      <div class="btn-row">
+        <button class="btn" id="logoutBtn">🚪 登出帳號</button>
+        <button class="btn" id="switchBtn">🔄 切換帳號</button>
+      </div>
+    </div>
+    <div class="set-block">
+      <h4>💬 訊息</h4>
+      <div class="set-row"><div>已讀未讀<div class="sub">顯示訊息旁的已讀/未讀標記</div></div><label class="switch"><input type="checkbox" id="setRead" ${st.showRead?'checked':''}><span class="sl"></span></label></div>
+      <div class="set-row"><div>引用功能<div class="sub">夢角回覆時有幾率引用你的訊息</div></div><label class="switch"><input type="checkbox" id="setQuote" ${st.quoteEnabled?'checked':''}><span class="sl"></span></label></div>
+      <div class="set-row" style="display:block">
+        <div>夢角回覆延時<div class="sub">1–120 秒，夢角在此範圍內隨機延時回覆</div></div>
+        <div class="range-row"><input type="range" id="setDelay" min="1" max="120" value="${st.maxDelay}"><span id="setDelayVal">${st.maxDelay}s</span></div>
+      </div>
+    </div>
+    <div class="set-block">
+      <h4>⏰ 主動行為</h4>
+      <div class="set-row"><div>夢角主動發消息<div class="sub">在後台間隔發送（${st.proactiveMin}–${st.proactiveMax} 秒）</div></div><label class="switch"><input type="checkbox" id="setProactive" ${st.proactive?'checked':''}><span class="sl"></span></label></div>
+      <div class="range-row" style="margin-bottom:8px"><input type="range" id="setProMin" min="1" max="300" value="${st.proactiveMin}"><span>${st.proactiveMin}s</span></div>
+      <div class="range-row"><input type="range" id="setProMax" min="1" max="300" value="${st.proactiveMax}"><span>${st.proactiveMax}s</span></div>
+      <div class="set-row"><div>夢角主動來電<div class="sub">約 10% 幾率，每 60 秒檢查一次</div></div><label class="switch"><input type="checkbox" id="setCallPro" ${st.callProactive?'checked':''}><span class="sl"></span></label></div>
+    </div>
+    <div class="set-block">
+      <h4>⌨️ 正在打字提示</h4>
+      <div class="set-row"><div>顯示提示<div class="sub">夢角回覆前顯示「正在打字」</div></div><label class="switch"><input type="checkbox" id="setTyping" ${st.typingTip?'checked':''}><span class="sl"></span></label></div>
+      <div class="set-row"><div>顯示夢角頭像</div><label class="switch"><input type="checkbox" id="setTypingAv" ${st.typingAvatar?'checked':''}><span class="sl"></span></label></div>
+      <div class="form-row" style="margin-top:6px"><label>提示文字</label><input type="text" class="set-input" id="setTypingText" value="${esc(st.typingText)}"></div>
+    </div>`;
+  el.querySelector('#setRead').onchange=e=>{st.showRead=e.target.checked;saveData();renderMessages()};
+  el.querySelector('#setQuote').onchange=e=>{st.quoteEnabled=e.target.checked;saveData()};
+  el.querySelector('#setDelay').oninput=e=>{st.maxDelay=+e.target.value;el.querySelector('#setDelayVal').textContent=st.maxDelay+'s';saveData()};
+  el.querySelector('#setProactive').onchange=e=>{st.proactive=e.target.checked;saveData();setupProactive()};
+  el.querySelector('#setProMin').oninput=e=>{st.proactiveMin=+e.target.value;if(st.proactiveMin>st.proactiveMax){st.proactiveMax=st.proactiveMin}saveData();renderSettingsPanel()};
+  el.querySelector('#setProMax').oninput=e=>{st.proactiveMax=+e.target.value;if(st.proactiveMax<st.proactiveMin){st.proactiveMin=st.proactiveMax}saveData();renderSettingsPanel()};
+  el.querySelector('#setCallPro').onchange=e=>{st.callProactive=e.target.checked;saveData();setupCallProactive()};
+  el.querySelector('#setTyping').onchange=e=>{st.typingTip=e.target.checked;saveData()};
+  el.querySelector('#setTypingAv').onchange=e=>{st.typingAvatar=e.target.checked;saveData()};
+  el.querySelector('#setTypingText').onchange=e=>{st.typingText=e.target.value.trim()||'夢角正在輸入...';saveData()};
+  el.querySelector('#logoutBtn').onclick=()=>confirmDialog('登出帳號','確定要登出目前帳號嗎？',()=>{logout()});
+  el.querySelector('#switchBtn').onclick=()=>confirmDialog('切換帳號','確定要切換帳號嗎？將返回登入頁。',()=>{logout()});
+}
+
+/* ================= 主动行为定时器 ================= */
+function setupProactive(){
+  clearTimeout(S.activeProactiveTimer);S.activeProactiveTimer=null;
+  if(!S.data.settings.proactive)return;
+  scheduleProactive();
+}
+function scheduleProactive(){
+  clearTimeout(S.activeProactiveTimer);
+  if(!S.data.settings.proactive)return;
+  const min=Math.max(1,S.data.settings.proactiveMin),max=Math.max(min,S.data.settings.proactiveMax);
+  const delay=randInt(min,max)*1000;
+  S.activeProactiveTimer=setTimeout(()=>{
+    if(S.data.settings.proactive){pushMsg({from:'dream',type:'text',text:dreamPickReply(),read:false})}
+    scheduleProactive();
+  },delay);
+}
+let callProTimer=null;
+function setupCallProactive(){
+  clearInterval(callProTimer);callProTimer=null;
+  if(!S.data.settings.callProactive)return;
+  callProTimer=setInterval(()=>{
+    if(S.currentPage!=='chat')return;
+    if(CALL.state)return;
+    if(Math.random()<0.10)startIncomingCall();
+  },60000);
+}
+
+/* ================= 页面切换 ================= */
+function goLib(tab){
+  S.currentPage='lib';
+  document.getElementById('chatPage').classList.add('hidden');
+  document.getElementById('libPage').classList.remove('hidden');
+  document.querySelectorAll('.lib-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.lib-panel').forEach(p=>p.classList.add('hidden'));
+  const map={cards:'libPanelCards',kaomoji:'libPanelKaomoji',stickers:'libPanelStickers',settings:'libPanelSettings'};
+  document.getElementById(map[tab]).classList.remove('hidden');
+  S.currentLibTab=tab;renderLibAll();
+}
+function goChat(){
+  S.currentPage='chat';
+  document.getElementById('libPage').classList.add('hidden');
+  document.getElementById('chatPage').classList.remove('hidden');
+}
+
+/* ================= 登录流程 ================= */
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  err.textContent='';
+  if(!u){err.textContent='請輸入帳號名稱';return}
+  if(u==='__guest__'){err.textContent='此名稱為保留字';return}
+  loadAccounts();
+  const hash=await simpleHash(u+'::'+p);
+  if(S.accounts[u]){if(S.accounts[u].hash!==hash){err.textContent='密碼錯誤';return}}
+  else{S.accounts[u]={hash,created:Date.now()};saveAccounts()}
+  S.session={username:u};
+  localStorage.setItem('dream_chat_session',JSON.stringify(S.session));
+  await enterApp();
+}
+async function doGuest(){
+  S.session={username:'__guest__'};
+  localStorage.setItem('dream_chat_session',JSON.stringify(S.session));
+  await enterApp();
+}
+async function enterApp(){
+  await loadData();applyTheme();
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('acctName').textContent=S.session.username==='__guest__'?'訪客':S.session.username;
+  renderChatTop();renderMessages();renderLibAll();
+  setupProactive();setupCallProactive();
+}
+function logout(){
+  localStorage.removeItem('dream_chat_session');
+  S.session=null;S.data=null;S.dbImg={};
+  clearTimeout(S.typingTimer);clearTimeout(S.activeProactiveTimer);clearInterval(callProTimer);
+  hideTyping();
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+  document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+}
+
+/* 表情包选择器 */
+function openStickerPicker(){
+  if(!S.data.stickers.length){toast('尚無表情包，請先到字卡庫新增');return}
+  const {ov,close}=modal(`<h3>選擇表情包<button class="x">✕</button></h3><div id="stkGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>`);
+  const grid=ov.querySelector('#stkGrid');
+  S.data.stickers.forEach(s=>{
+    const src=S.dbImg[s.key]||'';
+    const b=document.createElement('button');
+    b.style.cssText='padding:6px;border-radius:10px;background:var(--input-bg);display:flex;align-items:center;justify-content:center';
+    b.innerHTML=`<img src="${src}" style="width:56px;height:56px;object-fit:contain">`;
+    b.onclick=()=>{sendUserSticker(s);close()};
+    grid.appendChild(b);
+  });
+}
+
+/* ================= 事件绑定 ================= */
+function bindEvents(){
+  document.getElementById('loginBtn').onclick=doLogin;
+  document.getElementById('guestBtn').onclick=doGuest;
+  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+  document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+  document.getElementById('userHero').onclick=()=>openProfileEdit('user');
+  document.getElementById('dreamHero').onclick=()=>openProfileEdit('dream');
+  document.getElementById('btnTheme').onclick=openThemeModal;
+  document.getElementById('btnLib').onclick=()=>goLib('cards');
+  document.getElementById('btnData').onclick=openDataManager;
+  document.getElementById('btnTarot').onclick=openTarot;
+
+  document.getElementById('libBack').onclick=goChat;
+  document.querySelectorAll('.lib-tab').forEach(b=>b.onclick=()=>goLib(b.dataset.tab));
+
+  document.getElementById('sendBtn').onclick=sendUserText;
+  const inp=document.getElementById('msgInput');
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendUserText()}});
+  inp.addEventListener('input',()=>{inp.style.height='38px';inp.style.height=Math.min(110,inp.scrollHeight)+'px';inp.style.lineHeight='1.4';inp.style.padding='9px 14px'});
+
+  document.getElementById('btnContinue').onclick=triggerContinue;
+  document.getElementById('btnImage').onclick=()=>{
+    const f=document.getElementById('hiddenFile');f.accept='image/*';f.value='';f.onchange=()=>{
+      const file=f.files[0];if(!file)return;
+      const rd=new FileReader();rd.onload=()=>sendUserImage(rd.result);rd.readAsDataURL(file);
+    };f.click();
+  };
+  document.getElementById('btnSticker').onclick=openStickerPicker;
+  document.getElementById('btnCall').onclick=startOutgoingCall;
+  document.getElementById('quoteClose').onclick=hideQuoteBar;
+
+  document.addEventListener('click',e=>{if(!e.target.closest('#ctxMenu'))closeCtx()});
+}
+
+/* ================= 塔羅牌 ================= */
+const TAROT_DECK = [
+  {id:0,name:'愚者',en:'The Fool',upright:'全新的開始、冒險、純真、無限可能。放下顧慮，勇敢踏出第一步。',reversed:'魯莽、逃避責任、缺乏計畫。提醒你行動前先想清楚。',
+   svg:'<path d="M40 30c8-6 20-6 28 0" stroke="#c9a25e" stroke-width="2" fill="none"/><circle cx="54" cy="22" r="6" fill="#c9a25e"/><path d="M30 60l24-18 24 18" stroke="#c9a25e" stroke-width="2" fill="none"/>'},
+  {id:1,name:'魔術師',en:'The Magician',upright:'創造力、意志力、資源充足。你擁有實現目標的一切工具。',reversed:'操縱、才能浪費、自信不足。留意虛張聲勢。',
+   svg:'<circle cx="54" cy="30" r="10" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 40v25M44 65h20" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:2,name:'女祭司',en:'The High Priestess',upright:'直覺、內在智慧、神秘。傾聽內心的聲音。',reversed:'忽視直覺、隱藏的秘密、表面化。',
+   svg:'<path d="M54 18l14 20-14 20-14-20z" fill="none" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="38" r="4" fill="#c9a25e"/>'},
+  {id:3,name:'皇后',en:'The Empress',upright:'豐盛、母性、創造、滋養。享受生命的美好。',reversed:'依賴、過度保護、創造力受阻。',
+   svg:'<circle cx="54" cy="34" r="12" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M42 60c4-8 20-8 24 0" stroke="#c9a25e" stroke-width="2" fill="none"/>'},
+  {id:4,name:'皇帝',en:'The Emperor',upright:'權威、結構、穩定、領導。建立秩序與規則。',reversed:'專制、僵化、缺乏彈性。',
+   svg:'<rect x="40" y="24" width="28" height="20" rx="3" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 44v20" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:5,name:'教皇',en:'The Hierophant',upright:'傳統、信仰、教導、指引。尋求精神上的導師。',reversed:'反叛、教條、打破常規。',
+   svg:'<path d="M54 20v40M40 34h28" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="30" r="4" fill="#c9a25e"/>'},
+  {id:6,name:'戀人',en:'The Lovers',upright:'愛、和諧、選擇、結合。聽從內心的選擇。',reversed:'不和、錯誤選擇、價值衝突。',
+   svg:'<path d="M42 40a8 8 0 0 1 12-6 8 8 0 0 1 12 6c0 6-12 16-12 16S42 46 42 40z" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:7,name:'戰車',en:'The Chariot',upright:'意志、勝利、決心、前進。掌控方向，勇往直前。',reversed:'失控、挫折、方向不明。',
+   svg:'<circle cx="40" cy="46" r="8" fill="none" stroke="#c9a25e" stroke-width="2"/><circle cx="68" cy="46" r="8" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M40 38h28" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:8,name:'力量',en:'Strength',upright:'勇氣、耐心、溫柔的力量。以柔克剛。',reversed:'自我懷疑、軟弱、失去耐心。',
+   svg:'<path d="M46 30c0-6 16-6 16 0v10c0 8-16 8-16 0z" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 46v18" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:9,name:'隱者',en:'The Hermit',upright:'內省、孤獨、尋求真理。獨處中獲得啟示。',reversed:'孤立、逃避、拒絕幫助。',
+   svg:'<path d="M54 20v14" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="38" r="6" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M48 44l-6 22M60 44l6 22" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:10,name:'命運之輪',en:'Wheel of Fortune',upright:'轉機、命運、循環、好運。順勢而為。',reversed:'厄運、停滯、抗拒改變。',
+   svg:'<circle cx="54" cy="40" r="16" fill="none" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="40" r="4" fill="#c9a25e"/><path d="M54 24v8M54 48v8M38 40h8M62 40h8" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:11,name:'正義',en:'Justice',upright:'公平、真相、平衡、因果。為自己的選擇負責。',reversed:'不公、偏見、逃避責任。',
+   svg:'<path d="M54 20v40" stroke="#c9a25e" stroke-width="2"/><path d="M38 30h32" stroke="#c9a25e" stroke-width="2"/><path d="M38 30l-6 12h12zM70 30l-6 12h12z" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:12,name:'倒吊人',en:'The Hanged Man',upright:'犧牲、等待、新視角。換個角度看待問題。',reversed:'執著、無謂犧牲、停滯不前。',
+   svg:'<path d="M54 18v20M42 44h24" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="50" r="6" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 56v14" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:13,name:'死神',en:'Death',upright:'結束、轉變、重生、放下。舊的結束是新的開始。',reversed:'抗拒改變、恐懼、停滯。',
+   svg:'<path d="M54 20v30" stroke="#c9a25e" stroke-width="2"/><path d="M44 50l10 12 10-12z" fill="none" stroke="#c9a25e" stroke-width="2"/><circle cx="54" cy="26" r="6" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:14,name:'節制',en:'Temperance',upright:'平衡、調和、耐心、中庸。找到內心的和諧。',reversed:'失衡、過度、缺乏耐心。',
+   svg:'<path d="M40 26h28l-8 20H48z" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 46v18" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:15,name:'惡魔',en:'The Devil',upright:'束縛、慾望、執念、陰影。正視內心的恐懼。',reversed:'解脫、覺醒、打破枷鎖。',
+   svg:'<path d="M54 20c-10 0-14 10-14 16s6 12 14 12 14-6 14-12S64 20 54 20z" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M46 30l-6-6M62 30l6-6" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:16,name:'高塔',en:'The Tower',upright:'劇變、崩塌、覺醒、解構。舊結構的瓦解帶來新生。',reversed:'避免災難、延遲改變、恐懼。',
+   svg:'<rect x="44" y="26" width="20" height="34" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M44 26l10-10 10 10" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 46v14" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:17,name:'星星',en:'The Star',upright:'希望、療癒、靈感、信心。黑暗後的星光。',reversed:'失望、失去信心、消極。',
+   svg:'<path d="M54 18l4 12 12 4-12 4-4 12-4-12-12-4 12-4z" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:18,name:'月亮',en:'The Moon',upright:'直覺、潛意識、幻象、不安。信任內在的指引。',reversed:'迷霧散去、真相大白、釋放恐懼。',
+   svg:'<path d="M62 30a14 14 0 1 0 0 24 12 12 0 0 1 0-24z" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:19,name:'太陽',en:'The Sun',upright:'喜悅、成功、活力、光明。充滿能量與自信。',reversed:'暫時的陰霾、缺乏熱情、延遲的成功。',
+   svg:'<circle cx="54" cy="40" r="10" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 24v6M54 50v6M38 40h6M64 40h6M44 30l4 4M64 30l-4 4M44 50l4-4M64 50l-4-4" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:20,name:'審判',en:'Judgement',upright:'覺醒、重生、召喚、寬恕。聆聽內心的召喚。',reversed:'自我懷疑、逃避、拒絕改變。',
+   svg:'<path d="M54 18v20" stroke="#c9a25e" stroke-width="2"/><path d="M44 38h20" stroke="#c9a25e" stroke-width="2"/><path d="M44 44l10 16 10-16" fill="none" stroke="#c9a25e" stroke-width="2"/>'},
+  {id:21,name:'世界',en:'The World',upright:'完成、圓滿、成就、整合。一個循環的完美收尾。',reversed:'未竟、拖延、缺乏收尾。',
+   svg:'<ellipse cx="54" cy="40" rx="18" ry="12" fill="none" stroke="#c9a25e" stroke-width="2"/><path d="M54 28v4M54 48v4M36 40h4M68 40h4" stroke="#c9a25e" stroke-width="2"/>'}
+];
+
+function openTarot(){
+  if(document.getElementById('tarotOverlay'))return;
+  const ov=document.createElement('div');
+  ov.id='tarotOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55);overflow-y:auto';
+  const panel=document.createElement('div');
+  panel.style.cssText='width:100%;max-width:560px;border-radius:24px;padding:22px;background:var(--tarot-bg);color:var(--tarot-text);box-shadow:0 24px 80px rgba(0,0,0,.4);position:relative';
+  ov.appendChild(panel);document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove()});
+  let step='choose', count=1, question='', drawn=[], flipped=0;
+  function render(){
+    if(step==='choose'){
+      panel.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="margin:0;font-size:18px;letter-spacing:2px;color:var(--tarot-accent)">✦ 塔羅牌占卜 ✦</h2>
+          <button id="tClose" style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.08);font-size:14px;color:var(--tarot-text)">✕</button>
+        </div>
+        <p style="font-size:13px;opacity:.8;line-height:1.6;margin:0 0 14px">靜下心，選擇你要抽取的牌數。</p>
+        <div style="display:flex;gap:12px;margin-bottom:18px">
+          <button class="tarot-choice" data-c="1" style="flex:1;padding:18px;border-radius:14px;background:${count===1?'var(--tarot-accent)':'rgba(255,255,255,.5)'};color:${count===1?'#fff':'var(--tarot-text)'};border:2px solid ${count===1?'var(--tarot-accent)':'transparent'}">
+            <div style="font-size:26px">🂠</div><div style="font-size:13px;margin-top:6px">一張牌</div><div style="font-size:11px;opacity:.7">單一指引</div>
+          </button>
+          <button class="tarot-choice" data-c="3" style="flex:1;padding:18px;border-radius:14px;background:${count===3?'var(--tarot-accent)':'rgba(255,255,255,.5)'};color:${count===3?'#fff':'var(--tarot-text)'};border:2px solid ${count===3?'var(--tarot-accent)':'transparent'}">
+            <div style="font-size:26px">🂠🂠🂠</div><div style="font-size:13px;margin-top:6px">三張牌</div><div style="font-size:11px;opacity:.7">過去 / 現在 / 未來</div>
+          </button>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;opacity:.7;display:block;margin-bottom:6px">你的問題（可選）</label>
+          <textarea id="tQ" rows="3" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.1);background:rgba(255,255,255,.6);color:var(--tarot-text);font-size:13px;outline:none;resize:vertical" placeholder="在心中默念你的問題...">${esc(question)}</textarea>
+        </div>
+        <button id="tShuffle" style="width:100%;padding:14px;border-radius:14px;background:var(--tarot-accent);color:#fff;font-size:15px;font-weight:600;letter-spacing:3px">✦ 洗　牌 ✦</button>`;
+      panel.querySelector('#tClose').onclick=()=>ov.remove();
+      panel.querySelectorAll('.tarot-choice').forEach(b=>b.onclick=()=>{count=+b.dataset.c;render()});
+      panel.querySelector('#tShuffle').onclick=()=>{question=panel.querySelector('#tQ').value.trim();drawCards();step='reveal';flipped=0;render()};
+    }
+    else if(step==='reveal'){
+      const positions=count===1?['指引']:['過去','現在','未來'];
+      panel.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h2 style="margin:0;font-size:17px;letter-spacing:2px;color:var(--tarot-accent)">✦ 翻開你的牌 ✦</h2>
+          <button id="tClose" style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.08);font-size:14px;color:var(--tarot-text)">✕</button>
+        </div>
+        <p style="font-size:12.5px;opacity:.75;text-align:center;margin:0 0 16px">點擊牌面翻開（${flipped}/${count}）</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          ${drawn.map((d,i)=>`
+            <div class="tarot-card-wrap" data-i="${i}" style="width:${count===1?'140px':'100px'};perspective:900px;cursor:pointer">
+              <div class="tarot-flip" style="position:relative;width:100%;aspect-ratio:2/3;transform-style:preserve-3d;transition:transform .7s;transform:${d.flipped?'rotateY(180deg)':''}">
+                <div style="position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;background:linear-gradient(160deg,#3a2f22,#5a4a36);border:2px solid var(--tarot-gold);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.3)">
+                  <svg viewBox="0 0 108 160" width="100%" height="100%" style="padding:10px">
+                    <path d="M54 30l6 18 18 6-18 6-6 18-6-18-18-6 18-6z" fill="none" stroke="#d9b878" stroke-width="2"/>
+                    <circle cx="54" cy="110" r="3" fill="#d9b878"/>
+                    <path d="M40 120h28M40 128h28M40 136h18" stroke="#d9b878" stroke-width="1.5" opacity=".6"/>
+                  </svg>
+                </div>
+                <div style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);border-radius:12px;background:var(--tarot-card);border:2px solid var(--tarot-gold);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.3)">
+                  <svg viewBox="0 0 108 100" width="100%" height="60%">${TAROT_DECK[d.id].svg}</svg>
+                  <div style="font-size:${count===1?'13px':'11px'};font-weight:700;color:var(--tarot-text);text-align:center;margin-top:4px">${TAROT_DECK[d.id].name}</div>
+                  <div style="font-size:9px;opacity:.6;margin-top:2px">${d.rev?'逆位':'正位'}</div>
+                </div>
+              </div>
+              <div style="text-align:center;font-size:10.5px;opacity:.65;margin-top:6px">${positions[i]}</div>
+            </div>`).join('')}
+        </div>
+        <button id="tClose2" style="width:100%;margin-top:20px;padding:11px;border-radius:12px;background:rgba(0,0,0,.08);color:var(--tarot-text);font-size:13px">關閉</button>`;
+      panel.querySelector('#tClose').onclick=()=>ov.remove();
+      panel.querySelector('#tClose2').onclick=()=>ov.remove();
+      panel.querySelectorAll('.tarot-card-wrap').forEach(w=>w.onclick=()=>{
+        const i=+w.dataset.i;
+        if(drawn[i].flipped)return;
+        drawn[i].flipped=true;flipped++;render();
+        if(flipped===count)setTimeout(()=>{step='result';render()},800);
+      });
+    }
+    else if(step==='result'){
+      const positions=count===1?['指引']:['過去','現在','未來'];
+      panel.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h2 style="margin:0;font-size:17px;letter-spacing:2px;color:var(--tarot-accent)">✦ 占卜結果 ✦</h2>
+          <button id="tClose" style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.08);font-size:14px;color:var(--tarot-text)">✕</button>
+        </div>
+        ${question?`<div style="font-size:12.5px;opacity:.8;background:rgba(0,0,0,.05);padding:8px 12px;border-radius:10px;margin-bottom:14px;line-height:1.5">問題：${esc(question)}</div>`:''}
+        ${drawn.map((d,i)=>`
+          <div style="display:flex;gap:12px;margin-bottom:14px;background:var(--tarot-card);border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.08)">
+            <div style="width:64px;flex-shrink:0;display:flex;flex-direction:column;align-items:center">
+              <svg viewBox="0 0 108 100" width="64" height="60">${TAROT_DECK[d.id].svg}</svg>
+              <div style="font-size:10px;opacity:.6;margin-top:4px">${positions[i]}</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:14px;font-weight:700;color:var(--tarot-text)">${TAROT_DECK[d.id].name}</span>
+                <span style="font-size:10px;padding:2px 8px;border-radius:8px;background:${d.rev?'rgba(180,80,80,.18)':'rgba(120,160,90,.2)'};color:${d.rev?'#b45050':'#5a7a3a'}">${d.rev?'逆位':'正位'}</span>
+              </div>
+              <div style="font-size:11px;opacity:.5;margin:2px 0 6px">${TAROT_DECK[d.id].en}</div>
+              <div style="font-size:12.5px;line-height:1.6;color:var(--tarot-text)">${d.rev?TAROT_DECK[d.id].reversed:TAROT_DECK[d.id].upright}</div>
+            </div>
+          </div>`).join('')}
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button id="tAgain" style="flex:1;padding:12px;border-radius:12px;background:var(--tarot-accent);color:#fff;font-size:14px;font-weight:600">再占一次</button>
+          <button id="tClose2" style="flex:1;padding:12px;border-radius:12px;background:rgba(0,0,0,.08);color:var(--tarot-text);font-size:14px">關閉</button>
+        </div>`;
+      panel.querySelector('#tClose').onclick=()=>ov.remove();
+      panel.querySelector('#tClose2').onclick=()=>ov.remove();
+      panel.querySelector('#tAgain').onclick=()=>{step='choose';count=1;question='';drawn=[];flipped=0;render()};
+    }
+  }
+  function drawCards(){
+    const pool=[...TAROT_DECK];drawn=[];
+    for(let i=0;i<count;i++){
+      const idx=Math.floor(Math.random()*pool.length);
+      const card=pool.splice(idx,1)[0];
+      drawn.push({id:card.id,rev:Math.random()<0.5,flipped:false});
+    }
+  }
+  render();
+}
+
+/* ================= 通話系統 ================= */
+const CALL={state:null,timer:null,mini:null};
+function ensureCallUI(){
+  let c=document.getElementById('callOverlay');
+  if(!c){
+    c=document.createElement('div');
+    c.id='callOverlay';
+    c.style.cssText='position:fixed;inset:0;z-index:450;display:none;align-items:center;justify-content:center;background:var(--call-mask);padding:16px';
+    document.body.appendChild(c);
+  }
+  return c;
+}
+function ensureMiniUI(){
+  let m=document.getElementById('callMini');
+  if(!m){
+    m=document.createElement('div');
+    m.id='callMini';
+    m.style.cssText='position:fixed;z-index:460;display:none;background:var(--panel);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.3);padding:10px 12px;width:210px;cursor:grab;user-select:none;transition:opacity .2s';
+    document.body.appendChild(m);
+  }
+  return m;
+}
+function callAvatarHTML(){return `<div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--avatar-border);background:#eee;display:flex;align-items:center;justify-content:center;margin:0 auto">${avatarHTML(S.data.dream.avatarKey)}</div>`}
+function fmtDur(ms){const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function startOutgoingCall(){
+  if(CALL.state){toast('通話中');return}
+  const ov=ensureCallUI();
+  CALL.state={dir:'out',status:'calling',start:0};
+  ov.style.display='flex';
+  ov.innerHTML=`
+    <div style="width:100%;max-width:340px;background:var(--panel);border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      ${callAvatarHTML()}
+      <div style="font-size:18px;font-weight:700;margin:14px 0 4px;color:var(--text)">${esc(S.data.dream.name||'夢角')}</div>
+      <div id="callStatus" style="font-size:13px;color:var(--text-sub);margin-bottom:20px">正在呼叫...</div>
+      <div id="callTimer" style="font-size:15px;color:var(--text-sub);margin-bottom:20px;font-variant-numeric:tabular-nums"></div>
+      <div style="display:flex;gap:12px;justify-content:center"><button id="callHang" style="width:56px;height:56px;border-radius:50%;background:#e05a5a;color:#fff;font-size:22px">✕</button></div>
+    </div>`;
+  ov.querySelector('#callHang').onclick=()=>endCall('hang');
+  setTimeout(()=>{if(CALL.state&&CALL.state.status==='calling'){if(Math.random()<0.5)connectCall();else endCall('reject')}},randInt(3000,6000));
+}
+function startIncomingCall(){
+  if(CALL.state)return;
+  const ov=ensureCallUI();
+  CALL.state={dir:'in',status:'ringing',start:0};
+  ov.style.display='flex';
+  ov.innerHTML=`
+    <div style="width:100%;max-width:340px;background:var(--panel);border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      ${callAvatarHTML()}
+      <div style="font-size:18px;font-weight:700;margin:14px 0 4px;color:var(--text)">${esc(S.data.dream.name||'夢角')}</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-bottom:20px">邀請你通話...</div>
+      <div style="display:flex;gap:16px;justify-content:center">
+        <button id="callReject" style="width:56px;height:56px;border-radius:50%;background:#e05a5a;color:#fff;font-size:20px">✕</button>
+        <button id="callAccept" style="width:56px;height:56px;border-radius:50%;background:#37c26a;color:#fff;font-size:20px">✓</button>
+      </div>
+    </div>`;
+  ov.querySelector('#callAccept').onclick=()=>connectCall();
+  ov.querySelector('#callReject').onclick=()=>endCall('reject');
+  CALL.state.autoTimer=setTimeout(()=>{if(CALL.state&&CALL.state.status==='ringing')endCall('miss')},15000);
+}
+function connectCall(){
+  if(!CALL.state)return;
+  CALL.state.status='connected';CALL.state.start=Date.now();
+  const ov=document.getElementById('callOverlay');
+  if(ov){
+    ov.innerHTML=`
+      <div style="width:100%;max-width:340px;background:var(--panel);border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+        ${callAvatarHTML()}
+        <div style="font-size:18px;font-weight:700;margin:14px 0 4px;color:var(--text)">${esc(S.data.dream.name||'夢角')}</div>
+        <div style="font-size:13px;color:var(--text-sub);margin-bottom:6px">通話中</div>
+        <div id="callTimer" style="font-size:20px;color:var(--text);margin-bottom:20px;font-variant-numeric:tabular-nums">00:00</div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button id="callMute" style="width:52px;height:52px;border-radius:50%;background:var(--input-bg);color:var(--text);font-size:18px">🎤</button>
+          <button id="callMin" style="width:52px;height:52px;border-radius:50%;background:var(--input-bg);color:var(--text);font-size:18px">－</button>
+          <button id="callHang" style="width:52px;height:52px;border-radius:50%;background:#e05a5a;color:#fff;font-size:20px">✕</button>
+        </div>
+      </div>`;
+    ov.querySelector('#callHang').onclick=()=>endCall('hang');
+    ov.querySelector('#callMin').onclick=()=>minimizeCall();
+    let muted=false;
+    ov.querySelector('#callMute').onclick=()=>{muted=!muted;ov.querySelector('#callMute').style.background=muted?'#e05a5a':'var(--input-bg)';ov.querySelector('#callMute').style.color=muted?'#fff':'var(--text)'};
+  }
+  clearInterval(CALL.timer);
+  CALL.timer=setInterval(()=>{
+    const el=document.getElementById('callTimer');
+    if(el&&CALL.state&&CALL.state.status==='connected')el.textContent=fmtDur(Date.now()-CALL.state.start);
+    const mel=document.getElementById('callMiniTimer');
+    if(mel&&CALL.state&&CALL.state.status==='connected')mel.textContent=fmtDur(Date.now()-CALL.state.start);
+  },1000);
+}
+function minimizeCall(){
+  const ov=document.getElementById('callOverlay');if(ov)ov.style.display='none';
+  const m=ensureMiniUI();
+  m.style.display='block';m.style.left=(window.innerWidth-230)+'px';m.style.top=(window.innerHeight-130)+'px';
+  m.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;border:1px solid var(--avatar-border)">${avatarHTML(S.data.dream.avatarKey)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(S.data.dream.name||'夢角')}</div>
+        <div style="font-size:11px;color:var(--text-sub)">通話中 · <span id="callMiniTimer">00:00</span></div>
+      </div>
+      <button id="miniHang" style="width:28px;height:28px;border-radius:50%;background:#e05a5a;color:#fff;font-size:12px">✕</button>
+      <button id="miniExpand" style="width:28px;height:28px;border-radius:50%;background:var(--input-bg);color:var(--text);font-size:12px">⤢</button>
+    </div>`;
+  m.querySelector('#miniHang').onclick=()=>endCall('hang');
+  m.querySelector('#miniExpand').onclick=()=>expandCall();
+  makeDraggable(m);
+}
+function expandCall(){
+  const m=document.getElementById('callMini');if(m)m.style.display='none';
+  const ov=document.getElementById('callOverlay');if(ov)ov.style.display='flex';
+}
+/* 小窗：随意拖拽，不强制贴边 */
+function makeDraggable(el){
+  let dragging=false,sx=0,sy=0,ox=0,oy=0;
+  el.onmousedown=e=>{
+    if(e.target.tagName==='BUTTON')return;
+    dragging=true;sx=e.clientX;sy=e.clientY;
+    ox=parseInt(el.style.left)||0;oy=parseInt(el.style.top)||0;
+    el.style.cursor='grabbing';
+  };
+  const onMove=e=>{
+    if(!dragging)return;
+    let nx=ox+(e.clientX-sx),ny=oy+(e.clientY-sy);
+    // 仅限制在视口内，不吸附
+    nx=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,nx));
+    ny=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,ny));
+    el.style.left=nx+'px';el.style.top=ny+'px';
+  };
+  const onUp=()=>{
+    if(!dragging)return;
+    dragging=false;el.style.cursor='grab';
+  };
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onUp);
+  // 触屏
+  el.addEventListener('touchstart',e=>{
+    if(e.target.tagName==='BUTTON')return;
+    const t=e.touches[0];dragging=true;sx=t.clientX;sy=t.clientY;
+    ox=parseInt(el.style.left)||0;oy=parseInt(el.style.top)||0;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const t=e.touches[0];
+    let nx=ox+(t.clientX-sx),ny=oy+(t.clientY-sy);
+    nx=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,nx));
+    ny=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,ny));
+    el.style.left=nx+'px';el.style.top=ny+'px';
+    e.preventDefault();
+  },{passive:false});
+  el.addEventListener('touchend',()=>{dragging=false});
+}
+function endCall(reason){
+  if(!CALL.state)return;
+  const st=CALL.state;
+  clearInterval(CALL.timer);clearTimeout(st.autoTimer);
+  const ov=document.getElementById('callOverlay');if(ov)ov.style.display='none';
+  const m=document.getElementById('callMini');if(m)m.style.display='none';
+  const dur=st.start?Date.now()-st.start:0;
+  let text='';
+  if(reason==='reject')text='對方已拒絕你的通話';
+  else if(reason==='miss')text='未接來電';
+  else if(reason==='hang')text=st.start?`通話結束 · ${fmtDur(dur)}`:'通話已取消';
+  else text='通話結束';
+  S.data.messages.push({from:'user',type:'sys',text,ts:now(),id:uid()});
+  saveData();renderMessages();
+  CALL.state=null;
+}
+
+/* ================= 启动 ================= */
+(async function init(){
+  await openDB();
+  loadAccounts();
+  bindEvents();
+  const sess=localStorage.getItem('dream_chat_session');
+  if(sess){try{const s=JSON.parse(sess);if(s&&s.username){S.session=s;await enterApp()}}catch(e){}}
+})();
+</script>
+</body>
+</html>
